@@ -1,0 +1,24 @@
+name: master
+on:
+  push:
+    branches:
+      - master
+jobs:
+  unit-test:
+    name: Unit Test and Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          # Note that tox will actually control the version(s) to test against, not the setting
+          # below. This Python version is only used for the initial "pip install" command.
+          python-version: 3.8
+      - name: Unit test and code coverage on Python 3.8
+        run: |
+          pip install .[testing]
+          tox
+
+# TODO: Add additional jobs, such as publishing the wheel
