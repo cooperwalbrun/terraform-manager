@@ -1,0 +1,16 @@
+[run]
+branch = true
+source = terraform-manager
+omit =
+    terraform-manager/__init__.py
+    terraform-manager/__main__.py
+
+[report]
+fail_under = 80
+show_missing = True
+skip_empty = True
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    def __str__
+    if __name__ == .__main__.:
