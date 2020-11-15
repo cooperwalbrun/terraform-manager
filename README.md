@@ -1,46 +1,42 @@
 # terraform-manager ![master](https://github.com/cooperwalbrun/terraform-manager/workflows/master/badge.svg)
 
+TODO - enumerate features & mention that Terraform API v2 is used
+
+-terraform api v2
+-adherence to API rate limits
+-automatic pagination for applicable API endpoints
+-others?
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for developer-oriented information.
+
+## Installation
+
 TODO
 
-## Development Workspace Setup
+## Configuration
 
-To start development and testing, ensure you have Python 3.x installed,
-[activate the virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments)
-with something like
+All that needs to be configured in order to use this module is a token or credentials file for
+interacting with the Terraform API. There are several ways to do this; the primary ones are
+described below. For the first two options, there is corresponding
+[documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).
 
-```bash
-$ python -m venv venv
-$ source venv/Scripts/activate
-```
+### Terraform CLI Configuration
 
-Then, run one of the following commands in this project's root directory:
+If you have previously configured the Terraform CLI on your machine and subsequently logged into the
+target Terraform domain (cloud or enterprise), `terraform-manager` will automatically use your
+pre-existing token (stored on your machine by Terraform itself) to make API calls.
 
-```bash
-pip install -e .[development] # Development and unit testing purposes
-pip install -e .[testing]     # Unit testing-only purposes
-```
+### Environment Variable Storing the Credentials File Path
 
-## Updating Dependencies
+The `TF_CLI_CONFIG_FILE` environment variable may be used to explicitly specify the path to a
+file containing your Terraform token. Note that the file must be in HashiCorp's JSON credentials
+file format.
 
->Before issuing a `putup --update` command to update PyScaffold, be sure to review the comments in
->setup.py. After issuing `putup --update`, ensure that the `setuptools` version restrictions in
->`setup.py` and `pyproject.toml` are identical.
+### Environment Variable Storing the Token
 
-Ensure that you are in the virtual environment (see above) before issuing these commands. Also note
-that these commands will only update the `requirements.txt`. You will still have to run e.g. `pip`
-commands using `requirements.txt` to update what is actually installed.
+You can optionally specify the `TERRAFORM_TOKEN` environment variable with the actual value of your
+token. This environment variable is specific to `terraform-manager`.
 
-```bash
-pip-compile --upgrade                   # Update all packages
-pip-compile --upgrade-package <package> # Update a specific package
-```
+## Usage
 
-## Unit Testing
-
-To run the unit tests, ensure you are in the virtual environment (see above) and run one of the
-following commands in this project's root directory:
-
-```bash
-python setup.py test # Run unit tests using your virtual environment's Python interpreter
-tox                  # Run unit tests using tox (one-to-many virtual environments)
-```
+TODO

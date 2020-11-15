@@ -17,7 +17,7 @@ jobs:
           # Note that tox will actually control the version(s) to test against, not the setting
           # below. This Python version is only used for the initial "pip install" command.
           python-version: 3.8
-      - name: Unit test and code coverage on Python 3.8
+      - name: Unit test and code coverage on Python 3.6, 3.7, 3.8, and 3.9
         run: |
           pip install .[testing]
           tox

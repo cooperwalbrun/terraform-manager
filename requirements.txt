@@ -4,4 +4,10 @@
 #
 #    pip-compile
 #
+certifi==2020.11.8        # via requests
+chardet==3.0.4            # via requests
+idna==2.10                # via requests
+ratelimit==2.2.1          # via terraform-manager (setup.py)
+requests==2.25.0          # via terraform-manager (setup.py)
+urllib3==1.26.2           # via requests
 wheel==0.35.1             # via terraform-manager (setup.py)

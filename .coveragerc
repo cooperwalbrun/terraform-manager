@@ -1,9 +1,9 @@
 [run]
 branch = true
-source = terraform-manager
+source = src/terraform_manager
 omit =
-    terraform-manager/__init__.py
-    terraform-manager/__main__.py
+    src/terraform_manager/__init__.py
+    src/terraform_manager/__main__.py
 
 [report]
 fail_under = 80
