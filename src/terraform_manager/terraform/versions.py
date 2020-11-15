@@ -1,9 +1,13 @@
 import os
+import sys
 from textwrap import wrap
 from typing import List, Dict, Optional
 
+import requests
 from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
+from terraform_manager.terraform import credentials
+from terraform_manager.utilities.throttle import throttle
 from terraform_manager.utilities.utilities import coalesce_domain
 
 VersionSummary = Dict[str, List[Workspace]]
@@ -27,8 +31,40 @@ def group_by_version(workspaces: List[Workspace]) -> VersionSummary:
     return versions
 
 
-def patch_versions(organization: str, workspaces: List[Workspace], new_version: str) -> None:
-    pass
+def patch_versions(
+    organization: str, workspaces: List[Workspace], new_version: str, url: Optional[str]
+) -> None:
+    """
+    Patches the Terraform version for each given workspace. This method will not attempt to patch
+    any versions if at least one of the workspaces would be downgraded by the patch operation - this
+    is prophylactic as Terraform itself does not support downgrades.
+
+    :param organization: The organization whose workspaces are being patched.
+    :param workspaces: The workspaces to patch.
+    :param new_version: The new Terraform version to assign to the workspaces.
+    :param url: The URL of the targeted Terraform (e.g. Terraform Cloud or a custom Terraform
+                Enterprise URL).
+    :return: None
+    """
+
+    for workspace in workspaces:
+        if workspace.is_terraform_version_newer_than(new_version):
+            # yapf: disable
+            print((
+                "Error: at least one of the target workspaces has a version newer than the one you "
+                "are attempting to change to."
+            ), file=sys.stderr)
+            # yapf: enable
+            sys.exit(1)
+    headers = {"Authorization": f"Bearer {credentials.find_token(url)}"}
+    data = {"data": {"attributes": {"terraform-version": new_version}}}
+    for workspace in workspaces:
+        url = f"https://{coalesce_domain(url)}/api/v2/workspaces/{workspace.workspace_id}",
+        response = throttle(lambda: requests.patch(url, data=data, headers=headers))
+        if response.status_code != 200:
+            pass
+        else:
+            pass
 
 
 def write_version_summary(

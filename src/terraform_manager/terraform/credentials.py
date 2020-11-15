@@ -58,8 +58,8 @@ def find_token(terraform_domain: str) -> Optional[str]:
             except:
                 # yapf: disable
                 print((
-                    f"A credentials file was found at {expanded_path}, but valid JSON could not be "
-                    "parsed from it."
+                    f"Error: a credentials file was found at {expanded_path}, but valid JSON could "
+                    "not be parsed from it."
                 ), file=sys.stderr)
                 # yapf: enable
     _cached_token = _parse_json_for_token(terraform_domain, credentials_json)

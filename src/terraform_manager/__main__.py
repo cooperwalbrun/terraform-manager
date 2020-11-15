@@ -2,8 +2,9 @@ import sys
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
+import semver
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform import workspaces
+from terraform_manager.terraform import workspaces, latest_version
 from terraform_manager.terraform.versions import group_by_version, write_version_summary, \
     patch_versions
 
@@ -76,7 +77,14 @@ def main() -> None:
         data = group_by_version(targeted_workspaces)
         write_version_summary(organization, workspaces_to_target is not None, url, data)
     elif argument_dictionary.get("patch_versions") is not None:
-        patch_versions(organization, targeted_workspaces, argument_dictionary["patch_versions"])
+        desired_version = argument_dictionary["patch_versions"]
+        if not semver.VersionInfo.isvalid(desired_version) and desired_version != latest_version:
+            print(f"The version you specified ({desired_version}) is not valid.", file=sys.stderr)
+            sys.exit(1)
+        else:
+            patch_versions(
+                organization, targeted_workspaces, argument_dictionary["patch_versions"], url
+            )
 
 
 if __name__ == "__main__":

@@ -40,8 +40,8 @@ def exhaust_pages(url: str, json_mapper: Callable[[Any], A]) -> List[A]:
         if response.status_code != 200:
             # yapf: disable
             print((
-                f"Error reading data from {url} with parameters {parameters} - response from the "
-                f"API was {response}"
+                f"Error: the Terraform API returned an error response from {url} with parameters "
+                f"{parameters} - response from the API was {response}"
             ), file=sys.stderr)
             # yapf: enable
             current_page = None
