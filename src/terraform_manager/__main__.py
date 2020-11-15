@@ -2,6 +2,7 @@ from argparse import ArgumentParser, Namespace
 from typing import Dict, Union
 
 from terraform_manager.terraform import workspaces
+from terraform_manager.terraform.versions import group_by_version
 
 _parser: ArgumentParser = ArgumentParser(
     description="Manages Terraform workspaces in batch fashion."
@@ -55,7 +56,7 @@ def main() -> None:
         workspaces=argument_dictionary.get("workspaces"),
         url=argument_dictionary.get("url")
     )
-    print(targeted_workspaces)
+    print(group_by_version(targeted_workspaces))
 
 
 if __name__ == "__main__":

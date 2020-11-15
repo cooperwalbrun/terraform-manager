@@ -8,16 +8,20 @@ jobs:
   unit-test:
     name: Unit Test and Code Coverage
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
         with:
-          # Note that tox will actually control the version(s) to test against, not the setting
-          # below. This Python version is only used for the initial "pip install" command.
-          python-version: 3.8
-      - name: Unit test and code coverage on Python 3.6, 3.7, 3.8, and 3.9
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
         run: |
-          pip install .[testing]
-          tox
+          python -m pip install --upgrade pip
+          pip install .[github_actions]
+      - name: Unit test and code coverage on Python ${{ matrix.python-version }}
+        run: tox

@@ -3,7 +3,7 @@ from typing import Optional
 from urllib.parse import urlparse
 
 
-def is_windows_operating_system() -> bool:
+def is_windows_operating_system() -> bool:  # pragma: no cover
     return os.name == "nt"
 
 
