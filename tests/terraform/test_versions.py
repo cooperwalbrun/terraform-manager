@@ -1,12 +1,14 @@
 import os
 import random
 import string
+from typing import List
 from unittest.mock import MagicMock, call
 
 from pytest_mock import MockerFixture
 from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform.versions import group_by_version, write_version_summary
+from terraform_manager.terraform.versions import group_by_version, write_version_summary, \
+    VersionSummary
 
 
 def _workspace(version: str) -> Workspace:
@@ -24,11 +26,15 @@ _0_12_28: Workspace = _workspace("0.12.28")
 _0_13_1_first: Workspace = _workspace("0.13.1")
 _0_13_1_second: Workspace = _workspace("0.13.1")
 _0_13_5: Workspace = _workspace("0.13.5")
-_workspaces = [_0_12_28, _0_13_1_first, _0_13_1_second, _0_13_5]
-_groups = group_by_version(_workspaces)
-_table_data = [["0.13.5", _0_13_5.name],
-               ["0.13.1", ", ".join(sorted([_0_13_1_first.name,
-                                            _0_13_1_second.name]))], ["0.12.28", _0_12_28.name]]
+_workspaces: List[Workspace] = [_0_12_28, _0_13_1_first, _0_13_1_second, _0_13_5]
+_groups: VersionSummary = group_by_version(_workspaces)
+# yapf: disable
+_table_data: List[List[str]] = [
+    ["0.13.5", _0_13_5.name],
+    ["0.13.1", ", ".join(sorted([_0_13_1_first.name, _0_13_1_second.name]))],
+    ["0.12.28", _0_12_28.name]
+]
+# yapf: enable
 
 
 def _first_summary_print_statement(organization: str) -> call:

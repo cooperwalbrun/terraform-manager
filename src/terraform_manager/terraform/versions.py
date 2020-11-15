@@ -27,6 +27,10 @@ def group_by_version(workspaces: List[Workspace]) -> VersionSummary:
     return versions
 
 
+def patch_versions(organization: str, workspaces: List[Workspace], new_version: str) -> None:
+    pass
+
+
 def write_version_summary(
     organization: str,
     targeting_specific_workspaces: bool,
