@@ -1,4 +1,8 @@
+from typing import Optional
+
 from semver import VersionInfo
+
+_latest_version: str = "latest"  # The string Terraform uses when a workspace is set to auto-update
 
 
 class Workspace:
@@ -12,18 +16,30 @@ class Workspace:
     ):  # pragma: no cover
         self.workspace_id = workspace_id
         self.name = name
-        self.terraform_version: VersionInfo = VersionInfo.parse(terraform_version)
+
+        self.terraform_version = terraform_version
+        self.parsed_terraform_version: Optional[VersionInfo] = None
+        if VersionInfo.isvalid(terraform_version):
+            self.parsed_terraform_version: VersionInfo = VersionInfo.parse(terraform_version)
+        self.is_auto_updating: bool = self.terraform_version == _latest_version
+
         self.auto_apply = auto_apply
         self.is_locked = is_locked
 
     def is_terraform_version_newer_than(self, version: str) -> bool:
-        return self.terraform_version.compare(version) > 0
+        if self.terraform_version == _latest_version:
+            return version != _latest_version
+        else:
+            return version != _latest_version and self.parsed_terraform_version.compare(version) > 0
 
     def is_terraform_version_older_than(self, version: str) -> bool:
-        return self.terraform_version.compare(version) < 0
+        if self.terraform_version == _latest_version:
+            return False
+        else:
+            return version == _latest_version or self.parsed_terraform_version.compare(version) < 0
 
     def is_terraform_version_equal_to(self, version: str) -> bool:
-        return self.terraform_version.compare(version) == 0
+        return self.terraform_version == version
 
     def __repr__(self):
         return (

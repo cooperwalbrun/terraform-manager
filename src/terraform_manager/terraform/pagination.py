@@ -27,7 +27,7 @@ def exhaust_pages(url: str, json_mapper: Callable[[Any], A]) -> List[A]:
     """
 
     domain = coalesce_domain(url)
-    token = credentials.find_token(domain)
+    headers = {"Authorization": f"Bearer {credentials.find_token(domain)}"}
     current_page = 1
     aggregate = []
     while current_page is not None:
@@ -36,7 +36,6 @@ def exhaust_pages(url: str, json_mapper: Callable[[Any], A]) -> List[A]:
             "page[number]": current_page,
             "page[size]": 100
         }
-        headers = {"Authorization": f"Bearer {token}"}
         response = throttle(lambda: requests.get(url, headers=headers, params=parameters))
         if response.status_code != 200:
             # yapf: disable

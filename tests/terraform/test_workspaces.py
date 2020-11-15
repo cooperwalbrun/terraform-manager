@@ -1,6 +1,5 @@
-from typing import Any
-
 import responses
+from pytest_mock import MockerFixture
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.workspaces import fetch_all
 
@@ -24,12 +23,12 @@ _test_json = {
 # yapf: enable
 
 
-def _establish_mocks(mocker: Any) -> None:
+def _establish_mocks(mocker: MockerFixture) -> None:
     mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
 
 
 @responses.activate
-def test_fetch_all_workspaces(mocker: Any) -> None:
+def test_fetch_all_workspaces(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     responses.add(
         responses.GET,
@@ -47,7 +46,7 @@ def test_fetch_all_workspaces(mocker: Any) -> None:
 
 
 @responses.activate
-def test_fetch_all_workspaces_with_filter(mocker: Any) -> None:
+def test_fetch_all_workspaces_with_filter(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     responses.add(
         responses.GET,
@@ -62,7 +61,7 @@ def test_fetch_all_workspaces_with_filter(mocker: Any) -> None:
 
 
 @responses.activate
-def test_fetch_all_workspaces_bad_json_response(mocker: Any) -> None:
+def test_fetch_all_workspaces_bad_json_response(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     json = {"data": {"bad json": "test"}}
     responses.add(

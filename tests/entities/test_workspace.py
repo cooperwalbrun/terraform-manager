@@ -5,12 +5,21 @@ def test_version_comparisons() -> None:
     workspace1 = Workspace("", "", "0.12.28", False, False)
     workspace2 = Workspace("", "", "0.13.1", False, False)
     workspace3 = Workspace("", "", "0.13.1", False, False)
-    assert workspace2.is_terraform_version_newer_than(str(workspace1.terraform_version))
-    assert workspace1.is_terraform_version_older_than(str(workspace2.terraform_version))
-    assert workspace2.is_terraform_version_equal_to(str(workspace3.terraform_version))
-    assert not workspace1.is_terraform_version_newer_than(str(workspace2.terraform_version))
-    assert not workspace2.is_terraform_version_older_than(str(workspace1.terraform_version))
-    assert not workspace2.is_terraform_version_equal_to(str(workspace1.terraform_version))
+    workspace4 = Workspace("", "", "latest", False, False)
+    workspace5 = Workspace("", "", "latest", False, False)
+    assert workspace2.is_terraform_version_newer_than(workspace1.terraform_version)
+    assert workspace1.is_terraform_version_older_than(workspace2.terraform_version)
+    assert workspace2.is_terraform_version_equal_to(workspace3.terraform_version)
+    assert workspace4.is_terraform_version_equal_to(workspace5.terraform_version)
+    assert workspace5.is_terraform_version_equal_to(workspace4.terraform_version)
+    assert not workspace1.is_terraform_version_newer_than(workspace2.terraform_version)
+    assert not workspace2.is_terraform_version_older_than(workspace1.terraform_version)
+    assert not workspace2.is_terraform_version_equal_to(workspace1.terraform_version)
+    for workspace in [workspace1, workspace2, workspace3]:
+        assert workspace4.is_terraform_version_newer_than(workspace.terraform_version)
+        assert workspace.is_terraform_version_older_than(workspace4.terraform_version)
+        assert not workspace.is_terraform_version_newer_than(workspace4.terraform_version)
+        assert not workspace4.is_terraform_version_older_than(workspace.terraform_version)
 
 
 def test_workspace_equality() -> None:

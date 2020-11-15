@@ -6,7 +6,7 @@ omit =
     **/terraform_manager/__main__.py
 
 [report]
-fail_under = 90
+fail_under = 95
 show_missing = True
 skip_empty = True
 exclude_lines =

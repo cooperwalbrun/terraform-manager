@@ -1,6 +1,7 @@
 from typing import Any, List, Dict
 
 import responses
+from pytest_mock import MockerFixture
 from terraform_manager.terraform.pagination import exhaust_pages
 
 _test_url: str = "http://some.endpoint/thing"
@@ -13,12 +14,12 @@ def _simple_mapper(data: List[Dict[str, str]]) -> List[str]:
     return aggregation
 
 
-def _establish_mocks(mocker: Any) -> None:
+def _establish_mocks(mocker: MockerFixture) -> None:
     mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
 
 
 @responses.activate
-def test_exhaust_pages_single_page(mocker: Any) -> None:
+def test_exhaust_pages_single_page(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     json = {"data": [{"objectname": "test1"}, {"objectname": "test2"}]}
     responses.add(
@@ -32,7 +33,7 @@ def test_exhaust_pages_single_page(mocker: Any) -> None:
 
 
 @responses.activate
-def test_exhaust_pages_single_page_with_meta_block(mocker: Any) -> None:
+def test_exhaust_pages_single_page_with_meta_block(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     json = {
         "data": [{
@@ -57,7 +58,7 @@ def test_exhaust_pages_single_page_with_meta_block(mocker: Any) -> None:
 
 
 @responses.activate
-def test_exhaust_pages_bad_json_response(mocker: Any) -> None:
+def test_exhaust_pages_bad_json_response(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     json = {"not data": {}}
     responses.add(
@@ -71,7 +72,7 @@ def test_exhaust_pages_bad_json_response(mocker: Any) -> None:
 
 
 @responses.activate
-def test_exhaust_pages_error_http_response(mocker: Any) -> None:
+def test_exhaust_pages_error_http_response(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     status_code = 500
     json = {
@@ -90,7 +91,7 @@ def test_exhaust_pages_error_http_response(mocker: Any) -> None:
 
 
 @responses.activate
-def test_exhaust_pages_multiple_pages(mocker: Any) -> None:
+def test_exhaust_pages_multiple_pages(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
     json_page1 = {
         "data": [{

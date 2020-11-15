@@ -28,12 +28,12 @@ def fetch_all(organization: str,
               workspaces: Optional[List[str]] = None,
               url: Optional[str] = None) -> List[Workspace]:
     """
-    Fetch all workspace names (or a subset if desired) from a particular Terraform organization.
+    Fetch all workspaces (or a subset if desired) from a particular Terraform organization.
 
     :param organization: The organization for which to fetch workspace data.
-    :param workspaces: The workspace(s) for which data should be fetched. If not specified, all
-                       workspace data will be fetched.
-    :param url: The URL of your target Terraform (e.g. Terraform Cloud or a custom Terraform
+    :param workspaces: The name(s) of workspace(s) for which data should be fetched. If not
+                       specified, all workspace data will be fetched.
+    :param url: The URL of the targeted Terraform (e.g. Terraform Cloud or a custom Terraform
                 Enterprise URL).
     :return: The workspace objects corresponding to the given criteria.
     """
