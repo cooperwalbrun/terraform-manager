@@ -3,7 +3,7 @@ from terraform_manager.terraform.versions import group_by_version
 
 
 def _ws(version: str) -> Workspace:
-    return Workspace("", "", version, False)
+    return Workspace("", "", version, False, False)
 
 
 def test_group_by_version() -> None:

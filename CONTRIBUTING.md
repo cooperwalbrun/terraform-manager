@@ -63,5 +63,5 @@ directory:
 
 ```bash
 python setup.py test # Run unit tests using your current virtual environment's Python interpreter
-tox                  # Run unit tests using tox (requires you to have the necessary Python interpreters on your machine)
+tox                  # Run unit tests using tox (requires that you have the necessary Python interpreters on your machine)
 ```

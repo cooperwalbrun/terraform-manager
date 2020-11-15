@@ -1,15 +1,19 @@
-import semver
-
 from semver import VersionInfo
 
 
 class Workspace:
     def __init__(
-        self, workspace_id: str, name: str, terraform_version: str, is_locked: bool
+        self,
+        workspace_id: str,
+        name: str,
+        terraform_version: str,
+        auto_apply: bool,
+        is_locked: bool
     ):  # pragma: no cover
         self.workspace_id = workspace_id
         self.name = name
-        self.terraform_version: VersionInfo = semver.VersionInfo.parse(terraform_version)
+        self.terraform_version: VersionInfo = VersionInfo.parse(terraform_version)
+        self.auto_apply = auto_apply
         self.is_locked = is_locked
 
     def is_terraform_version_newer_than(self, version: str) -> bool:
@@ -22,12 +26,14 @@ class Workspace:
         return self.terraform_version.compare(version) == 0
 
     def __repr__(self):
-        return "Workspace(workspace_id={}, name={}, terraform_version={}, is_locked={}".format(
-            self.workspace_id, self.name, self.terraform_version, self.is_locked
+        return (
+            f"Workspace(id={self.workspace_id}, name={self.name}, "
+            f"terraform_version={str(self.terraform_version)}, auto_apply={self.auto_apply}, "
+            f"is_locked={self.is_locked})"
         )
 
     def __str__(self):
-        return self.__repr__()
+        return repr(self)
 
     def __eq__(self, other):
         if isinstance(other, Workspace):

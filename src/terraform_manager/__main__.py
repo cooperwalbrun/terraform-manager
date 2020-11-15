@@ -18,22 +18,22 @@ _parser.add_argument(
     metavar="<url>",
     dest="url",
     help=(
-        "The URL of your Terraform Enterprise installation. If not specified, Terraform Cloud will "
-        "be used."
+        "The URL or domain of your Terraform Enterprise installation. If not specified, Terraform "
+        "Cloud will be used."
     )
 )
 _parser.add_argument(
     "--list-versions",
     action="store_true",
     dest="list_versions",
-    help="Lists the organization's workspaces' Terraform version(s) to the value provided"
+    help="Lists the workspaces' Terraform version(s) to the value provided"
 )
 _parser.add_argument(
     "--set-version",
     type=str,
     metavar="<version>",
     dest="set_version",
-    help="Sets the organization's workspaces' Terraform version(s) to the value provided"
+    help="Sets the workspaces' Terraform version(s) to the value provided"
 )
 _parser.add_argument(
     "--workspaces",

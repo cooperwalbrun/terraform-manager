@@ -12,12 +12,12 @@ _test_json = {
     "data": [{
         "id": "1",
         "attributes": {
-            "name": "test1", "terraform-version": "0.13.5", "locked": False
+            "auto-apply": False, "name": "test1", "terraform-version": "0.13.5", "locked": False
         }
     }, {
         "id": "2",
         "attributes": {
-            "name": "test2", "terraform-version": "0.12.28", "locked": False
+            "auto-apply": False, "name": "test2", "terraform-version": "0.12.28", "locked": False
         }
     }]
 }
@@ -40,7 +40,10 @@ def test_fetch_all_workspaces(mocker: Any) -> None:
     )
     assert fetch_all(
         _test_organization, url=_test_terraform_url
-    ) == [Workspace("1", "test1", "0.13.5", False), Workspace("2", "test2", "0.12.28", False)]
+    ) == [
+        Workspace("1", "test1", "0.13.5", False, False),
+        Workspace("2", "test2", "0.12.28", False, False)
+    ]
 
 
 @responses.activate
@@ -55,7 +58,7 @@ def test_fetch_all_workspaces_with_filter(mocker: Any) -> None:
     )
     assert fetch_all(
         _test_organization, workspaces=["test2"], url=_test_terraform_url
-    ) == [Workspace("2", "test2", "0.12.28", False)]
+    ) == [Workspace("2", "test2", "0.12.28", False, False)]
 
 
 @responses.activate
