@@ -14,3 +14,9 @@ class Workspace:
 
     def __str__(self):
         return self.__repr__()
+
+    def __eq__(self, other):
+        if isinstance(other, Workspace):
+            return other.workspace_id == self.workspace_id
+        else:
+            return False

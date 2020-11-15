@@ -21,7 +21,13 @@ def _establish_mocks(mocker: Any) -> None:
 def test_exhaust_pages_single_page(mocker: Any) -> None:
     _establish_mocks(mocker)
     json = {"data": [{"objectname": "test1"}, {"objectname": "test2"}]}
-    responses.add(responses.GET, _test_url, json=json, status=200)
+    responses.add(
+        responses.GET,
+        f"{_test_url}?page[size]=100&page[number]=1",
+        match_querystring=True,
+        json=json,
+        status=200
+    )
     assert exhaust_pages(_test_url, _simple_mapper) == [["test1", "test2"]]
 
 
@@ -40,7 +46,13 @@ def test_exhaust_pages_single_page_with_meta_block(mocker: Any) -> None:
             }
         }
     }
-    responses.add(responses.GET, _test_url, json=json, status=200)
+    responses.add(
+        responses.GET,
+        f"{_test_url}?page[size]=100&page[number]=1",
+        match_querystring=True,
+        json=json,
+        status=200
+    )
     assert exhaust_pages(_test_url, _simple_mapper) == [["test1", "test2"]]
 
 
@@ -48,15 +60,32 @@ def test_exhaust_pages_single_page_with_meta_block(mocker: Any) -> None:
 def test_exhaust_pages_bad_json_response(mocker: Any) -> None:
     _establish_mocks(mocker)
     json = {"not data": {}}
-    responses.add(responses.GET, _test_url, json=json, status=200)
+    responses.add(
+        responses.GET,
+        f"{_test_url}?page[size]=100&page[number]=1",
+        match_querystring=True,
+        json=json,
+        status=200
+    )
     assert exhaust_pages(_test_url, _simple_mapper) == []
 
 
 @responses.activate
-def test_exhaust_pages_error(mocker: Any) -> None:
+def test_exhaust_pages_error_http_response(mocker: Any) -> None:
     _establish_mocks(mocker)
-    json = {"errors": [{"detail": "Something bad happened.", "status": 500, "title": "Oops"}]}
-    responses.add(responses.GET, _test_url, json=json, status=500)
+    status_code = 500
+    json = {
+        "errors": [{
+            "detail": "Something bad happened.", "status": status_code, "title": "Oops"
+        }]
+    }
+    responses.add(
+        responses.GET,
+        f"{_test_url}?page[size]=100&page[number]=1",
+        match_querystring=True,
+        json=json,
+        status=status_code
+    )
     assert exhaust_pages(_test_url, _simple_mapper) == []
 
 
