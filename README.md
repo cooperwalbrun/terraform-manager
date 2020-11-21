@@ -5,6 +5,8 @@ TODO - enumerate features & mention that Terraform API v2 is used
 -terraform api v2
 -adherence to API rate limits
 -automatic pagination for applicable API endpoints
+-designed to be used as a CLI tool or called from python code (system exits centralized to __main__.py, console output controlled via function parameters, etc)
+    -e.g. parameters write_output, write_error_messages (defaults are always false)
 -others?
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for developer-oriented information.

@@ -17,23 +17,25 @@ _unix_credentials_locations: List[str] = [
 _cached_token: Optional[str] = None
 
 
-def _parse_json_for_token(domain: str, credentials_json: Any) -> Optional[str]:
-    if credentials_json is not None and "credentials" in credentials_json and domain in \
+def _parse_json_for_token(terraform_domain: str, credentials_json: Any) -> Optional[str]:
+    if credentials_json is not None and "credentials" in credentials_json and terraform_domain in \
             credentials_json["credentials"]:
-        return credentials_json["credentials"][domain].get("token")
+        return credentials_json["credentials"][terraform_domain].get("token")
     return None
 
 
-def find_token(terraform_domain: str) -> Optional[str]:
+def find_token(terraform_domain: str, *, write_error_messages: bool = False) -> Optional[str]:
     """
     Searches for a token to use for Terraform API invocations in three places: first, the
     TERRAFORM_TOKEN environment variable; second, the credentials JSON file that Terraform itself
     creates and uses for CLI operations; third, the TF_CLI_CONFIG_FILE environment variable. The
     latter two approaches are documented by HashiCorp here:
-    https://www.terraform.io/docs/commands/cli-config.html.
+    https://www.terraform.io/docs/commands/cli-config.html. After a token is found, it will be
+    cached internally in this module for efficient reuse.
 
     :param terraform_domain: The domain component of the API endpoint which you require an access
                              token for.
+    :param write_error_messages: Whether to write error messages to STDERR.
     :return: The access token if one can be found.
     """
 
@@ -56,11 +58,12 @@ def find_token(terraform_domain: str) -> Optional[str]:
                     credentials_json = json.load(file)
                 break
             except:
-                # yapf: disable
-                print((
-                    f"Error: a credentials file was found at {expanded_path}, but valid JSON could "
-                    "not be parsed from it."
-                ), file=sys.stderr)
-                # yapf: enable
+                if write_error_messages:
+                    # yapf: disable
+                    print((
+                        f"Error: a credentials file was found at {expanded_path}, but valid JSON "
+                        "could not be parsed from it."
+                    ), file=sys.stderr)
+                    # yapf: enable
     _cached_token = _parse_json_for_token(terraform_domain, credentials_json)
     return _cached_token

@@ -4,8 +4,9 @@ from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.workspaces import fetch_all
 
 _test_organization: str = "test"
-_test_terraform_url: str = "https://some.endpoint"
-_test_api_url: str = f"{_test_terraform_url}/api/v2/organizations/{_test_organization}/workspaces"
+_test_terraform_domain: str = "app.terraform.io"
+_test_api_url: str = \
+    f"https://{_test_terraform_domain}/api/v2/organizations/{_test_organization}/workspaces"
 # yapf: disable
 _test_json = {
     "data": [{
@@ -37,9 +38,7 @@ def test_fetch_all_workspaces(mocker: MockerFixture) -> None:
         json=_test_json,
         status=200
     )
-    assert fetch_all(
-        _test_organization, url=_test_terraform_url
-    ) == [
+    assert fetch_all(_test_terraform_domain, _test_organization) == [
         Workspace("1", "test1", "0.13.5", False, False),
         Workspace("2", "test2", "0.12.28", False, False)
     ]
@@ -56,7 +55,7 @@ def test_fetch_all_workspaces_with_filter(mocker: MockerFixture) -> None:
         status=200
     )
     assert fetch_all(
-        _test_organization, workspaces=["test2"], url=_test_terraform_url
+        _test_terraform_domain, _test_organization, workspaces=["test2"]
     ) == [Workspace("2", "test2", "0.12.28", False, False)]
 
 
@@ -71,4 +70,4 @@ def test_fetch_all_workspaces_bad_json_response(mocker: MockerFixture) -> None:
         json=json,
         status=200
     )
-    assert fetch_all(_test_organization, url=_test_terraform_url) == []
+    assert fetch_all(_test_terraform_domain, _test_organization) == []

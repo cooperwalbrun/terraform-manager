@@ -29,7 +29,7 @@ def test_exhaust_pages_single_page(mocker: MockerFixture) -> None:
         json=json,
         status=200
     )
-    assert exhaust_pages(_test_url, _simple_mapper) == [["test1", "test2"]]
+    assert exhaust_pages(_test_url, json_mapper=_simple_mapper) == [["test1", "test2"]]
 
 
 @responses.activate
@@ -54,7 +54,7 @@ def test_exhaust_pages_single_page_with_meta_block(mocker: MockerFixture) -> Non
         json=json,
         status=200
     )
-    assert exhaust_pages(_test_url, _simple_mapper) == [["test1", "test2"]]
+    assert exhaust_pages(_test_url, json_mapper=_simple_mapper) == [["test1", "test2"]]
 
 
 @responses.activate
@@ -68,7 +68,7 @@ def test_exhaust_pages_bad_json_response(mocker: MockerFixture) -> None:
         json=json,
         status=200
     )
-    assert exhaust_pages(_test_url, _simple_mapper) == []
+    assert exhaust_pages(_test_url, json_mapper=_simple_mapper) == []
 
 
 @responses.activate
@@ -87,7 +87,7 @@ def test_exhaust_pages_error_http_response(mocker: MockerFixture) -> None:
         json=json,
         status=status_code
     )
-    assert exhaust_pages(_test_url, _simple_mapper) == []
+    assert exhaust_pages(_test_url, json_mapper=_simple_mapper) == []
 
 
 @responses.activate
@@ -131,4 +131,6 @@ def test_exhaust_pages_multiple_pages(mocker: MockerFixture) -> None:
         json=json_page2,
         status=200
     )
-    assert exhaust_pages(_test_url, _simple_mapper) == [["test1", "test2"], ["test3", "test4"]]
+    assert exhaust_pages(
+        _test_url, json_mapper=_simple_mapper
+    ) == [["test1", "test2"], ["test3", "test4"]]
