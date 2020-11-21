@@ -7,6 +7,9 @@ TODO - enumerate features & mention that Terraform API v2 is used
 -automatic pagination for applicable API endpoints
 -designed to be used as a CLI tool or called from python code (system exits centralized to __main__.py, console output controlled via function parameters, etc)
     -e.g. parameters write_output, write_error_messages (defaults are always false)
+-useful workspace querying capabilities against an organization
+    -whitelist and blacklist mechanisms
+    -filter-by-name with support for Unix-like filename pattern matching (see https://docs.python.org/3/library/fnmatch.html)
 -others?
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for developer-oriented information.

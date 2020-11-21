@@ -43,6 +43,7 @@ _parser.add_argument(
     )
 )
 _parser.add_argument(
+    "-w",
     "--workspaces",
     type=str,
     metavar="<workspace>",
@@ -52,6 +53,13 @@ _parser.add_argument(
         "The names of workspace(s) to target for whichever operation is being used (if not "
         "specified, all workspaces will be automatically discovered and targeted)."
     )
+)
+_parser.add_argument(
+    "-b"
+    "--blacklist",
+    action="store_true",
+    dest="blacklist",
+    help="Inverts the workspace search criteria (see --workspaces)."
 )
 
 
@@ -65,7 +73,11 @@ def main() -> None:
     workspaces_to_target: Optional[List[str]] = argument_dictionary.get("workspaces")
 
     targeted_workspaces: List[Workspace] = workspaces.fetch_all(
-        domain, organization, workspaces=workspaces_to_target, write_error_messages=True
+        domain,
+        organization,
+        workspaces=workspaces_to_target,
+        blacklist=argument_dictionary["blacklist"],
+        write_error_messages=True
     )
     if len(targeted_workspaces) == 0:
         if workspaces_to_target is not None:

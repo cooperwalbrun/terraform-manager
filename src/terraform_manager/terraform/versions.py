@@ -1,13 +1,13 @@
 import os
 from textwrap import wrap
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 import requests
 from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import get_api_headers
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import coalesce_domain, safe_http_request
+from terraform_manager.utilities.utilities import safe_http_request
 
 VersionSummary = Dict[str, List[Workspace]]
 

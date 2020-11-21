@@ -4,7 +4,7 @@ from typing import TypeVar, Callable, Any, List, Optional, Dict
 import requests
 from terraform_manager.terraform import get_api_headers
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import safe_http_request, coalesce_domain
+from terraform_manager.utilities.utilities import safe_http_request, parse_domain
 
 A = TypeVar("A")
 
@@ -35,7 +35,7 @@ def exhaust_pages(
 
     current_page = 1
     aggregate = []
-    headers = get_api_headers(coalesce_domain(endpoint), write_error_messages=write_error_messages)
+    headers = get_api_headers(parse_domain(endpoint), write_error_messages=write_error_messages)
     while current_page is not None:
         parameters = {
             # See: https://www.terraform.io/docs/cloud/api/index.html#pagination

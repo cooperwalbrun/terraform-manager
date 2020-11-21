@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Callable, Union
+from typing import Callable, Union
 from urllib.parse import urlparse
 
 import requests
@@ -11,19 +11,18 @@ def is_windows_operating_system() -> bool:  # pragma: no cover
     return os.name == "nt"
 
 
-def coalesce_domain(url_or_domain: Optional[str]) -> str:
+def parse_domain(url: str) -> str:
     """
     Parses the domain portion out of a URL or domain, defaulting to Terraform Cloud's domain.
 
-    :param url_or_domain: The URL (or just the domain part of a URL) corresponding to a Terraform
-                          API endpoint (either Terraform Cloud or Enterprise).
-    :return: The domain part of the given string, or Terraform Cloud's domain if no URL/domain was
-             provided.
+    :param url: A URL corresponding to a Terraform API endpoint (either Terraform Cloud or
+                Enterprise).
+    :return: The domain part of the given string.
     """
 
-    if url_or_domain is not None and not url_or_domain.startswith("http"):
-        return coalesce_domain(f"http://{url_or_domain}")
-    return "app.terraform.io" if url_or_domain is None else urlparse(url_or_domain).netloc
+    if url is not None and not url.startswith("http"):
+        return parse_domain(f"http://{url}")
+    return "app.terraform.io" if url is None else urlparse(url).netloc
 
 
 def safe_http_request(function: Callable[[], Response]) -> Union[Response, ErrorResponse]:

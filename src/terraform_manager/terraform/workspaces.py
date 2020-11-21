@@ -1,9 +1,9 @@
 import itertools
+from fnmatch import fnmatch
 from typing import List, Optional, Dict, Any
 
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import pagination
-from terraform_manager.utilities.utilities import coalesce_domain
 
 
 def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
@@ -29,6 +29,7 @@ def fetch_all(
     organization: str,
     *,
     workspaces: Optional[List[str]] = None,
+    blacklist: bool = False,
     write_error_messages: bool = True
 ) -> List[Workspace]:
     """
@@ -39,11 +40,25 @@ def fetch_all(
     :param organization: The organization for which to fetch workspace data.
     :param workspaces: The name(s) of workspace(s) for which data should be fetched. If not
                        specified, all workspace data will be fetched.
+    :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
     :param write_error_messages: Whether to write error messages to STDERR.
     :return: The workspace objects corresponding to the given criteria.
     """
 
     lower_workspaces = [] if workspaces is None else [workspace.lower() for workspace in workspaces]
+
+    def is_returnable(workspace: Workspace) -> bool:
+        if blacklist:
+            for name in lower_workspaces:
+                if fnmatch(workspace.name.lower(), name):
+                    return False
+            return True
+        else:
+            for name in lower_workspaces:
+                if fnmatch(workspace.name.lower(), name):
+                    return True
+            return False
+
     return [
         workspace for workspace in itertools.chain.from_iterable(
             pagination.exhaust_pages(
@@ -51,5 +66,5 @@ def fetch_all(
                 json_mapper=_map_workspaces,
                 write_error_messages=write_error_messages
             )
-        ) if workspaces is None or workspace.name.lower() in lower_workspaces
+        ) if workspaces is None or is_returnable(workspace)
     ]

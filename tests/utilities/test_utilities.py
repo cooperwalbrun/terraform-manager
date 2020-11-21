@@ -1,7 +1,7 @@
-from terraform_manager.utilities.utilities import coalesce_domain
+from terraform_manager.utilities.utilities import parse_domain
 
 
-def test_coalesce_domain() -> None:
+def test_parse_url() -> None:
     cloud_domain = "app.terraform.io"
     terraform_cloud_tests = [
         None,
@@ -11,7 +11,7 @@ def test_coalesce_domain() -> None:
         f"{cloud_domain}/some/path"
     ]
     for test in terraform_cloud_tests:
-        assert coalesce_domain(test) == cloud_domain
+        assert parse_domain(test) == cloud_domain
 
     # yapf: disable
     enterprise_domain1 = "myserver.terraform.com"
@@ -27,4 +27,4 @@ def test_coalesce_domain() -> None:
     ]
     # yapf: enable
     for test, expected_result in terraform_enterprise_tests:
-        assert coalesce_domain(test) == expected_result
+        assert parse_domain(test) == expected_result
