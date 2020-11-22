@@ -11,7 +11,8 @@ class Workspace:
         name: str,
         terraform_version: str,
         auto_apply: bool,
-        is_locked: bool
+        is_locked: bool,
+        working_directory: str
     ):  # pragma: no cover
         self.workspace_id = workspace_id
         self.name = name
@@ -24,6 +25,7 @@ class Workspace:
 
         self.auto_apply = auto_apply
         self.is_locked = is_locked
+        self.working_directory = working_directory
 
     def is_terraform_version_newer_than(self, version: str) -> bool:
         if self.terraform_version == LATEST_VERSION:
@@ -44,7 +46,7 @@ class Workspace:
         return (
             f"Workspace(id={self.workspace_id}, name={self.name}, "
             f"terraform_version={self.terraform_version}, auto_apply={self.auto_apply}, "
-            f"is_locked={self.is_locked})"
+            f"is_locked={self.is_locked}, working_directory={self.working_directory})"
         )
 
     def __str__(self):

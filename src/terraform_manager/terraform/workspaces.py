@@ -16,14 +16,16 @@ def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
     for json_object in json:
         if "id" in json_object and "attributes" in json_object and "name" in \
                 json_object["attributes"] and "terraform-version" in json_object["attributes"] and \
-                "auto-apply" in json_object["attributes"] and "locked" in json_object["attributes"]:
+                "auto-apply" in json_object["attributes"] and "locked" in \
+                json_object["attributes"] and "working-directory" in json_object["attributes"]:
             workspaces.append(
                 Workspace(
                     json_object["id"],
                     json_object["attributes"]["name"],
                     json_object["attributes"]["terraform-version"],
                     json_object["attributes"]["auto-apply"],
-                    json_object["attributes"]["locked"]
+                    json_object["attributes"]["locked"],
+                    json_object["attributes"]["working-directory"]
                 )
             )
     return workspaces

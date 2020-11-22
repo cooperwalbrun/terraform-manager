@@ -13,12 +13,15 @@ def establish_credential_mocks(mocker: MockerFixture) -> None:
     mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
 
 
-def test_workspace(version: str = "0.13.1", locked: bool = False) -> Workspace:
+def test_workspace(
+    version: str = "0.13.1", locked: bool = False, working_directory: str = ""
+) -> Workspace:
     letters = string.ascii_lowercase
     return Workspace(
         "".join([random.choice(letters) for _ in range(5)]),
         "".join([random.choice(letters) for _ in range(5)]),
         version,
         False,
-        locked
+        locked,
+        working_directory
     )

@@ -8,6 +8,7 @@ from terraform_manager.terraform import workspaces, LATEST_VERSION
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 from terraform_manager.terraform.versions import group_by_version, write_version_summary, \
     patch_versions, check_versions
+from terraform_manager.terraform.working_directories import patch_working_directories
 
 _parser: ArgumentParser = ArgumentParser(
     description="Manages Terraform workspaces in batch fashion."
@@ -25,7 +26,7 @@ _parser.add_argument(
     metavar="<domain>",
     dest="domain",
     help=(
-        "The domain of your Terraform Enterprise installation. If not specified, Terraform Cloud's"
+        "The domain of your Terraform Enterprise installation. If not specified, Terraform Cloud's "
         "domain will be used."
     )
 )
@@ -62,7 +63,7 @@ operation_group.add_argument(
     metavar="<version>",
     dest="patch_versions",
     help=(
-        "Sets the workspaces' Terraform version(s) to the value provided. This can only be used to "
+        "Sets the workspaces' Terraform versions to the value provided. This can only be used to "
         "upgrade versions; downgrading is not supported due to limitations in Terraform itself. "
         "The program will stop you if the version you specify would cause a downgrade."
     )
@@ -80,6 +81,19 @@ operation_group.add_argument(
     action="store_true",
     dest="unlock_workspaces",
     help="Unlocks the workspaces."
+)
+operation_group.add_argument(
+    "--working-dir",
+    type=str,
+    metavar="<directory>",
+    dest="working_directory",
+    help="Sets the workspaces' working directories to the value provided."
+)
+operation_group.add_argument(
+    "--clear-working-dir",
+    action="store_true",
+    dest="clear_working_directory",
+    help="Clears the workspaces' working directories."
 )
 
 
@@ -146,7 +160,11 @@ def main() -> None:
                 fail()
             else:
                 total_success = patch_versions(
-                    domain, targeted_workspaces, new_version=desired_version, write_output=True
+                    domain,
+                    organization,
+                    targeted_workspaces,
+                    new_version=desired_version,
+                    write_output=True
                 )
                 if not total_success:
                     # There is no need to write any error messages because a report is written by
@@ -163,6 +181,19 @@ def main() -> None:
         if not total_success:
             # There is no need to write any error messages because a report is written by
             # the lock_or_unlock_workspaces method
+            fail()
+    elif argument_dictionary.get("working_directory") is not None or \
+            argument_dictionary["clear_working_directory"]:
+        total_success = patch_working_directories(
+            domain,
+            organization,
+            targeted_workspaces,
+            new_working_directory=argument_dictionary.get("working_directory"),
+            write_output=True
+        )
+        if not total_success:
+            # There is no need to write any error messages because a report is written by
+            # the patch_working_directories method
             fail()
 
 

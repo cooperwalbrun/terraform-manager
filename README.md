@@ -110,7 +110,7 @@ terraform-manager example123 <operation> -w aws* -b
 # Print a version summary to STDOUT
 terraform-manager example123 --version-summary
 
-# Upgrade workspace versions to the given version and write a report to STDOUT
+# Upgrade workspace versions to 0.13.5 and write a report to STDOUT
 terraform-manager example123 --patch-versions 0.13.5
 
 # Lock workspaces and write a report to STDOUT
@@ -118,6 +118,12 @@ terraform-manager example123 --lock
 
 # Unlock workspaces and write a report to STDOUT
 terraform-manager example123 --unlock
+
+# Set working directories to "dev" and write a report to STDOUT
+terraform-manager example123 --working-dir dev
+
+# Set working directories to empty and write a report to STDOUT
+terraform-manager example123 --clear-working-dir
 ```
 
 ## Usage (Python)
@@ -156,22 +162,30 @@ workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123", worksp
 ```python
 from typing import List
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform.workspaces import fetch_all
-from terraform_manager.terraform.versions import patch_versions
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
+from terraform_manager.terraform.versions import patch_versions
+from terraform_manager.terraform.working_directories import patch_working_directories
+from terraform_manager.terraform.workspaces import fetch_all
 
 # Have a list of workspaces fetched using e.g. one of the methods shown above
 domain: str = "app.terraform.io"
-workspaces: List[Workspace] = fetch_all(domain, "example123")
+organization: str = "example123"
+workspaces: List[Workspace] = fetch_all(domain, organization)
 
-# Upgrade workspace versions to the given version
-success: bool = patch_versions(domain, workspaces, new_version="0.13.5")
+# Upgrade workspace versions to 0.13.5
+success: bool = patch_versions(domain, organization, workspaces, new_version="0.13.5")
 
 # Lock workspaces
-success: bool = lock_or_unlock_workspaces(domain, workspaces, set_lock=True)
+success: bool = lock_or_unlock_workspaces(domain, organization, workspaces, set_lock=True)
 
 # Unlock workspaces
-success: bool = lock_or_unlock_workspaces(domain, workspaces, set_lock=False)
+success: bool = lock_or_unlock_workspaces(domain, organization, workspaces, set_lock=False)
+
+# Set working directories to "dev"
+success: bool = patch_working_directories(domain, organization, workspaces, new_working_directory="dev")
+
+# Set working directories to empty
+success: bool = patch_working_directories(domain, organization, workspaces, new_working_directory=None)
 ```
 
 ## Contributing

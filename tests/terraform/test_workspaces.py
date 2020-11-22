@@ -20,7 +20,8 @@ _test_json = {
             "auto-apply": _test_workspace1.auto_apply,
             "name": _test_workspace1.name,
             "terraform-version": _test_workspace1.terraform_version,
-            "locked": _test_workspace1.is_locked
+            "locked": _test_workspace1.is_locked,
+            "working-directory": _test_workspace1.working_directory
         }
     }, {
         "id": _test_workspace2.workspace_id,
@@ -28,7 +29,8 @@ _test_json = {
             "auto-apply": _test_workspace2.auto_apply,
             "name": _test_workspace2.name,
             "terraform-version": _test_workspace2.terraform_version,
-            "locked": _test_workspace2.is_locked
+            "locked": _test_workspace2.is_locked,
+            "working-directory": _test_workspace2.working_directory
         }
     }]
 }
