@@ -49,6 +49,7 @@ def check_versions(workspaces: List[Workspace], new_version: str) -> bool:
 
 def patch_versions(
     terraform_domain: str,
+    organization: str,
     workspaces: List[Workspace],
     *,
     new_version: str,
@@ -59,6 +60,7 @@ def patch_versions(
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
+    :param organization: The organization containing the workspaces to patch.
     :param workspaces: The workspaces to patch.
     :param new_version: The new Terraform version to assign to the workspaces.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
@@ -94,6 +96,11 @@ def patch_versions(
     )
 
     if write_output:
+        print((
+            f'Terraform workspace version patch results for organization "{organization}" at '
+            f'"{terraform_domain}":'
+        ))
+        print()
         print(
             tabulate(
                 sorted(report, key=lambda x: (x[3], x[0])),
@@ -101,6 +108,7 @@ def patch_versions(
                 colalign=("left", "right", "right")
             )
         )
+        print()
 
     return result
 
@@ -145,3 +153,5 @@ def write_version_summary(
     )
     if targeting_specific_workspaces:
         print(f"{os.linesep}Note: information is only being displayed for certain workspaces.")
+
+    print()

@@ -10,6 +10,7 @@ from terraform_manager.utilities.utilities import safe_http_request
 
 def lock_or_unlock_workspaces(
     terraform_domain: str,
+    organization: str,
     workspaces: List[Workspace],
     *,
     set_lock: bool,
@@ -20,6 +21,7 @@ def lock_or_unlock_workspaces(
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
+    :param organization: The organization containing the workspaces to lock/unlock.
     :param workspaces: The workspaces to lock or unlock.
     :param set_lock: The desired state of the workspaces' locks. If True, workspaces will be locked.
                      If False, workspaces will be unlocked.
@@ -45,11 +47,17 @@ def lock_or_unlock_workspaces(
             ])
 
     if write_output:
+        print((
+            f'Terraform workspace {operation} results for organization "{organization}" at '
+            f'"{terraform_domain}":'
+        ))
+        print()
         print(
             tabulate(
                 sorted(report, key=lambda x: (x[3], x[0])),
                 headers=["Workspace", "Lock State Before", "Lock State After", "Status", "Message"]
             )
         )
+        print()
 
     return all_successful

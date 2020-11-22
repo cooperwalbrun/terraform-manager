@@ -4,6 +4,7 @@ import string
 from pytest_mock import MockerFixture
 from terraform_manager.entities.workspace import Workspace
 
+TEST_ORGANIZATION: str = "test"
 TEST_TERRAFORM_DOMAIN: str = "app.terraform.io"
 TEST_API_URL: str = f"https://{TEST_TERRAFORM_DOMAIN}/api/v2"
 

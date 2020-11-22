@@ -155,6 +155,7 @@ def main() -> None:
     elif argument_dictionary["lock_workspaces"] or argument_dictionary["unlock_workspaces"]:
         total_success = lock_or_unlock_workspaces(
             domain,
+            organization,
             targeted_workspaces,
             set_lock=argument_dictionary["lock_workspaces"],
             write_output=True
