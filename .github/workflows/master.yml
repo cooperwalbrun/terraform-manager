@@ -24,5 +24,3 @@ jobs:
           pip install .[github_actions]
       - name: Unit test and code coverage on Python ${{ matrix.python-version }}
         run: tox
-
-# TODO: Add additional jobs, such as publishing the wheel
