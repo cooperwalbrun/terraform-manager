@@ -64,7 +64,9 @@ def test_patch_versions(mocker: MockerFixture) -> None:
         json=error_json,
         status=500
     )
-    patch_versions(TEST_TERRAFORM_DOMAIN, [_0_13_1_first, _0_13_5], test_version, write_output=True)
+    assert not patch_versions(
+        TEST_TERRAFORM_DOMAIN, [_0_13_1_first, _0_13_5], test_version, write_output=True
+    )
     # yapf: disable
     print_mock.assert_has_calls([
         call(
