@@ -1,0 +1,41 @@
+import os
+from typing import Callable, Union
+from urllib.parse import urlparse
+
+import requests
+from requests import Response
+from terraform_manager.entities.error_response import ErrorResponse
+
+
+def is_windows_operating_system() -> bool:  # pragma: no cover
+    return os.name == "nt"
+
+
+def parse_domain(url: str) -> str:
+    """
+    Parses the domain portion out of a URL or domain, defaulting to Terraform Cloud's domain.
+
+    :param url: A URL corresponding to a Terraform API endpoint (either Terraform Cloud or
+                Enterprise).
+    :return: The domain part of the given string.
+    """
+
+    if not url.startswith("http"):
+        return parse_domain(f"http://{url}")
+    return urlparse(url).netloc
+
+
+def safe_http_request(function: Callable[[], Response]) -> Union[Response, ErrorResponse]:
+    """
+    Attempts to invoke a given function, catching various exceptions raised by the requests library.
+    If any such exception is caught, a derived response entity is returned so that
+
+    :param function: A function to invoke in an exception-safe context. This will commonly be an
+                     HTTP request.
+    :return: Either the result of invoking the given function or None.
+    """
+
+    try:
+        return function()
+    except requests.exceptions.RequestException as e:
+        return ErrorResponse(str(e))
