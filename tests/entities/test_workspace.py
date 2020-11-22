@@ -26,9 +26,9 @@ def test_version_comparisons() -> None:
 
 def test_workspace_equality() -> None:
     workspace_id = ""
-    workspace1 = Workspace(workspace_id, "", "0.12.28", False, False)
-    workspace2 = Workspace(workspace_id, "", "0.13.1", False, False)
-    workspace3 = Workspace(workspace_id + "something", "", "0.13.1", False, False)
+    workspace1 = Workspace(workspace_id, "", "0.12.28", False, False, "")
+    workspace2 = Workspace(workspace_id, "", "0.13.1", False, False, "")
+    workspace3 = Workspace(workspace_id + "something", "", "0.13.1", False, False, "")
     assert workspace1 == workspace2
     assert workspace1 != workspace3
     assert workspace1 != "not a workspace object"
