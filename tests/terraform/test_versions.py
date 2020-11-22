@@ -10,9 +10,7 @@ from terraform_manager.terraform.versions import group_by_version, write_version
     VersionSummary, check_versions, patch_versions
 
 from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN, \
-    establish_credential_mocks
-
-_test_organization: str = "test"
+    establish_credential_mocks, TEST_ORGANIZATION
 
 _0_12_28: Workspace = test_workspace(version="0.12.28")
 _0_13_1_first: Workspace = test_workspace(version="0.13.1")
@@ -31,7 +29,7 @@ _version_table_data: List[List[str]] = [
 # yapf: enable
 
 _version_summary_statement: str = (
-    f'Terraform version summary for organization "{_test_organization}" at '
+    f'Terraform version summary for organization "{TEST_ORGANIZATION}" at '
     f'"{TEST_TERRAFORM_DOMAIN}":'
 )
 
@@ -65,12 +63,18 @@ def test_patch_versions(mocker: MockerFixture) -> None:
         status=500
     )
     assert not patch_versions(
-        TEST_TERRAFORM_DOMAIN, [_0_13_1_first, _0_13_5],
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION, [_0_13_1_first, _0_13_5],
         new_version=test_version,
         write_output=True
     )
     # yapf: disable
     print_mock.assert_has_calls([
+        call((
+            f'Terraform workspace version patch results for organization "{TEST_ORGANIZATION}" at '
+            f'"{TEST_TERRAFORM_DOMAIN}":'
+        )),
+        call(),
         call(
             tabulate(
                 [
@@ -92,43 +96,47 @@ def test_patch_versions(mocker: MockerFixture) -> None:
                 headers=["Workspace", "Version Before", "Version After", "Status", "Message"],
                 colalign=("left", "right", "right"))
 
-        )
+        ),
+        call()
     ])
     # yapf: enable
 
 
 def test_write_version_summary(mocker: MockerFixture) -> None:
     print_mock: MagicMock = mocker.patch("builtins.print")
-    write_version_summary(TEST_TERRAFORM_DOMAIN, _test_organization, False, _groups)
-    print_mock.assert_has_calls([
-        call(_version_summary_statement),
-        call(),
-        call(
-            tabulate(_version_table_data, headers=["Version", "Workspaces"], colalign=("right", ))
-        )
-    ])
-
-
-def test_write_version_summary_filtered(mocker: MockerFixture) -> None:
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    write_version_summary(TEST_TERRAFORM_DOMAIN, _test_organization, True, _groups)
+    write_version_summary(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, False, _groups)
     print_mock.assert_has_calls([
         call(_version_summary_statement),
         call(),
         call(
             tabulate(_version_table_data, headers=["Version", "Workspaces"], colalign=("right", ))
         ),
-        call(f"{os.linesep}Note: information is only being displayed for certain workspaces.")
+        call()
+    ])
+
+
+def test_write_version_summary_filtered(mocker: MockerFixture) -> None:
+    print_mock: MagicMock = mocker.patch("builtins.print")
+    write_version_summary(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, True, _groups)
+    print_mock.assert_has_calls([
+        call(_version_summary_statement),
+        call(),
+        call(
+            tabulate(_version_table_data, headers=["Version", "Workspaces"], colalign=("right", ))
+        ),
+        call(f"{os.linesep}Note: information is only being displayed for certain workspaces."),
+        call()
     ])
 
 
 def test_write_version_summary_single_version(mocker: MockerFixture) -> None:
     print_mock: MagicMock = mocker.patch("builtins.print")
-    write_version_summary(TEST_TERRAFORM_DOMAIN, _test_organization, False, {"0.13.5": [_0_13_5]})
+    write_version_summary(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, False, {"0.13.5": [_0_13_5]})
     print_mock.assert_has_calls([
         call(_version_summary_statement),
         call(),
         call(
             tabulate([["0.13.5", "All"]], headers=["Version", "Workspaces"], colalign=("right", ))
-        )
+        ),
+        call()
     ])

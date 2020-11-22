@@ -1,4 +1,4 @@
-# terraform-manager ![master](https://github.com/cooperwalbrun/terraform-manager/workflows/master/badge.svg)
+# terraform-manager ![master](https://github.com/cooperwalbrun/terraform-manager/workflows/master/badge.svg) ![PyPI](https://img.shields.io/pypi/v/terraform-manager) ![Code Coverage](https://img.shields.io/badge/coverage-over%2095%25-blue)
 
 1. [Overview](#overview)
 2. [Installation](#installation)

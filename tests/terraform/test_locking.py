@@ -6,7 +6,7 @@ from tabulate import tabulate
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 
 from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN, \
-    establish_credential_mocks
+    establish_credential_mocks, TEST_ORGANIZATION
 
 
 @responses.activate
@@ -31,12 +31,18 @@ def test_lock_or_unlock_workspaces(mocker: MockerFixture) -> None:
                 status=500
             )
             assert not lock_or_unlock_workspaces(
-                TEST_TERRAFORM_DOMAIN, [_test_workspace1, _test_workspace2],
+                TEST_TERRAFORM_DOMAIN,
+                TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
                 set_lock=test,
                 write_output=True
             )
             # yapf: disable
             print_mock.assert_has_calls([
+                call((
+                    f'Terraform workspace {operation} results for organization '
+                    f'"{TEST_ORGANIZATION}" at "{TEST_TERRAFORM_DOMAIN}":'
+                )),
+                call(),
                 call(
                     tabulate(
                         [
@@ -63,6 +69,7 @@ def test_lock_or_unlock_workspaces(mocker: MockerFixture) -> None:
                             "Message"
                         ])
 
-                )
+                ),
+                call()
             ])
             # yapf: enable
