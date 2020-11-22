@@ -3,16 +3,19 @@ from pytest_mock import MockerFixture
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.workspaces import fetch_all
 
+from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN, \
+    establish_credential_mocks
+
 _test_organization: str = "test"
-_test_terraform_domain: str = "app.terraform.io"
-_test_api_url: str = \
-    f"https://{_test_terraform_domain}/api/v2/organizations/{_test_organization}/workspaces"
-_test_workspace1: Workspace = Workspace("1", "test1", "0.13.5", False, False)
-_test_workspace2: Workspace = Workspace("2", "test2", "0.12.28", False, False)
+_test_api_url: str = f"{TEST_API_URL}/organizations/{_test_organization}/workspaces"
+
+_test_workspace1: Workspace = test_workspace(version="0.13.5")
+_test_workspace2: Workspace = test_workspace(version="0.12.28")
+
 # yapf: disable
 _test_json = {
     "data": [{
-        "id": "1",
+        "id": _test_workspace1.workspace_id,
         "attributes": {
             "auto-apply": _test_workspace1.auto_apply,
             "name": _test_workspace1.name,
@@ -20,7 +23,7 @@ _test_json = {
             "locked": _test_workspace1.is_locked
         }
     }, {
-        "id": "2",
+        "id": _test_workspace2.workspace_id,
         "attributes": {
             "auto-apply": _test_workspace2.auto_apply,
             "name": _test_workspace2.name,
@@ -32,13 +35,9 @@ _test_json = {
 # yapf: enable
 
 
-def _establish_mocks(mocker: MockerFixture) -> None:
-    mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
-
-
 @responses.activate
 def test_fetch_all_workspaces(mocker: MockerFixture) -> None:
-    _establish_mocks(mocker)
+    establish_credential_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -46,13 +45,13 @@ def test_fetch_all_workspaces(mocker: MockerFixture) -> None:
         json=_test_json,
         status=200
     )
-    assert fetch_all(_test_terraform_domain,
+    assert fetch_all(TEST_TERRAFORM_DOMAIN,
                      _test_organization) == [_test_workspace1, _test_workspace2]
 
 
 @responses.activate
 def test_fetch_all_workspaces_with_filter(mocker: MockerFixture) -> None:
-    _establish_mocks(mocker)
+    establish_credential_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -61,13 +60,16 @@ def test_fetch_all_workspaces_with_filter(mocker: MockerFixture) -> None:
         status=200
     )
     assert fetch_all(
-        _test_terraform_domain, _test_organization, workspaces=["test2"], blacklist=False
+        TEST_TERRAFORM_DOMAIN,
+        _test_organization,
+        workspaces=[_test_workspace2.name],
+        blacklist=False
     ) == [_test_workspace2]
 
 
 @responses.activate
 def test_fetch_all_workspaces_with_wildcard_filter(mocker: MockerFixture) -> None:
-    _establish_mocks(mocker)
+    establish_credential_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -76,13 +78,13 @@ def test_fetch_all_workspaces_with_wildcard_filter(mocker: MockerFixture) -> Non
         status=200
     )
     assert fetch_all(
-        _test_terraform_domain, _test_organization, workspaces=["test*"], blacklist=False
+        TEST_TERRAFORM_DOMAIN, _test_organization, workspaces=["*"], blacklist=False
     ) == [_test_workspace1, _test_workspace2]
 
 
 @responses.activate
 def test_fetch_all_workspaces_with_inverted_filter(mocker: MockerFixture) -> None:
-    _establish_mocks(mocker)
+    establish_credential_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -91,13 +93,16 @@ def test_fetch_all_workspaces_with_inverted_filter(mocker: MockerFixture) -> Non
         status=200
     )
     assert fetch_all(
-        _test_terraform_domain, _test_organization, workspaces=["test2"], blacklist=True
+        TEST_TERRAFORM_DOMAIN,
+        _test_organization,
+        workspaces=[_test_workspace2.name],
+        blacklist=True
     ) == [_test_workspace1]
 
 
 @responses.activate
 def test_fetch_all_workspaces_with_inverted_wildcard_filter(mocker: MockerFixture) -> None:
-    _establish_mocks(mocker)
+    establish_credential_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -106,13 +111,13 @@ def test_fetch_all_workspaces_with_inverted_wildcard_filter(mocker: MockerFixtur
         status=200
     )
     assert fetch_all(
-        _test_terraform_domain, _test_organization, workspaces=["test*"], blacklist=True
+        TEST_TERRAFORM_DOMAIN, _test_organization, workspaces=["*"], blacklist=True
     ) == []
 
 
 @responses.activate
 def test_fetch_all_workspaces_bad_json_response(mocker: MockerFixture) -> None:
-    _establish_mocks(mocker)
+    establish_credential_mocks(mocker)
     json = {"data": {"bad json": "test"}}
     responses.add(
         responses.GET,
@@ -121,4 +126,4 @@ def test_fetch_all_workspaces_bad_json_response(mocker: MockerFixture) -> None:
         json=json,
         status=200
     )
-    assert fetch_all(_test_terraform_domain, _test_organization) == []
+    assert fetch_all(TEST_TERRAFORM_DOMAIN, _test_organization) == []

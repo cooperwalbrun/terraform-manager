@@ -1,12 +1,14 @@
 from terraform_manager.entities.workspace import Workspace
 
+from tests.utilities.tooling import test_workspace
+
 
 def test_version_comparisons() -> None:
-    workspace1 = Workspace("", "", "0.12.28", False, False)
-    workspace2 = Workspace("", "", "0.13.1", False, False)
-    workspace3 = Workspace("", "", "0.13.1", False, False)
-    workspace4 = Workspace("", "", "latest", False, False)
-    workspace5 = Workspace("", "", "latest", False, False)
+    workspace1 = test_workspace(version="0.12.28")
+    workspace2 = test_workspace(version="0.13.1")
+    workspace3 = test_workspace(version="0.13.1")
+    workspace4 = test_workspace(version="latest")
+    workspace5 = test_workspace(version="latest")
     assert workspace2.is_terraform_version_newer_than(workspace1.terraform_version)
     assert workspace1.is_terraform_version_older_than(workspace2.terraform_version)
     assert workspace2.is_terraform_version_equal_to(workspace3.terraform_version)

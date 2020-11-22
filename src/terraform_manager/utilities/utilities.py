@@ -20,9 +20,9 @@ def parse_domain(url: str) -> str:
     :return: The domain part of the given string.
     """
 
-    if url is not None and not url.startswith("http"):
+    if not url.startswith("http"):
         return parse_domain(f"http://{url}")
-    return "app.terraform.io" if url is None else urlparse(url).netloc
+    return urlparse(url).netloc
 
 
 def safe_http_request(function: Callable[[], Response]) -> Union[Response, ErrorResponse]:

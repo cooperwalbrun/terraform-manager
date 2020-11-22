@@ -4,7 +4,6 @@ from terraform_manager.utilities.utilities import parse_domain
 def test_parse_url() -> None:
     cloud_domain = "app.terraform.io"
     terraform_cloud_tests = [
-        None,
         f"https://{cloud_domain}/app/someorganization",
         f"http://{cloud_domain}/app/someorganization",
         cloud_domain,

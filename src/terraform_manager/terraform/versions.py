@@ -1,13 +1,12 @@
 import os
 from textwrap import wrap
-from typing import List, Dict
+from typing import List, Dict, Union
 
-import requests
+from requests import Response
 from tabulate import tabulate
+from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform import get_api_headers
-from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import safe_http_request
+from terraform_manager.terraform.workspaces import batch_operation
 
 VersionSummary = Dict[str, List[Workspace]]
 
@@ -54,7 +53,7 @@ def patch_versions(
     new_version: str,
     *,
     write_output: bool = False
-) -> None:
+) -> bool:
     """
     Patches the Terraform version for each of a given list of workspaces.
 
@@ -63,37 +62,44 @@ def patch_versions(
     :param workspaces: The workspaces to patch.
     :param new_version: The new Terraform version to assign to the workspaces.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
-    :return: None
+    :return: Whether all patch operations were successful. If even a single one failed, returns
+             False.
     """
 
     json = {"data": {"type": "workspaces", "attributes": {"terraform-version": new_version}}}
     report = []
-    headers = get_api_headers(terraform_domain, write_error_messages=write_output)
-    for workspace in workspaces:
-        url = f"https://{terraform_domain}/api/v2/workspaces/{workspace.workspace_id}"
-        response = safe_http_request(
-            lambda: throttle(lambda: requests.patch(url, json=json, headers=headers))
-        )
-        if response.status_code == 200:
-            report.append([
-                workspace.name, workspace.terraform_version, new_version, "success", "none"
-            ])
-        else:
-            report.append([
-                workspace.name,
-                workspace.terraform_version,
-                workspace.terraform_version,
-                "error",
-                response.json()
-            ])
+
+    def on_success(workspace: Workspace) -> None:
+        report.append([workspace.name, workspace.terraform_version, new_version, "success", "none"])
+
+    def on_failure(workspace: Workspace, response: Union[Response, ErrorResponse]) -> None:
+        report.append([
+            workspace.name,
+            workspace.terraform_version,
+            workspace.terraform_version,
+            "error",
+            response.json()
+        ])
+
+    result = batch_operation(
+        terraform_domain,
+        workspaces,
+        json=json,
+        on_success=on_success,
+        on_failure=on_failure,
+        write_output=write_output
+    )
+
     if write_output:
         print(
             tabulate(
-                sorted(report, key=lambda x: x[3]),
+                sorted(report, key=lambda x: (x[3], x[0])),
                 headers=["Workspace", "Version Before", "Version After", "Status", "Message"],
                 colalign=("left", "right", "right")
             )
         )
+
+    return result
 
 
 def write_version_summary(
