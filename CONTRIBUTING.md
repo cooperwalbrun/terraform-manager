@@ -1,8 +1,14 @@
 # Contributing to terraform-manager
 
+1. [Development Workspace Setup](#development-workspace-setup)
+2. [Adding New Dependencies](#adding-new-dependencies)
+3. [Updating Dependencies](#updating-dependencies)
+4. [Unit Testing](#unit-testing)
+5. [Formatting Code](#formatting-code)
+
 ## Development Workspace Setup
 
-To start development and testing, ensure you have Python 3.x installed,
+To start development and testing, ensure you have Python >=3.6 and <4.0 installed,
 [activate the virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments)
 with something like
 
@@ -20,7 +26,8 @@ pip install -e .[testing]     # Unit testing purposes only
 
 ## Adding New Dependencies
 
-Ensure that you are in the virtual environment (see above) before issuing these commands.
+Before issuing these commands, ensure that you are in the virtual environment (see above) and that
+you executed the `pip install` command intended for development purposes (also above).
 
 1. Add the package to your environment.
     ```bash
@@ -32,6 +39,8 @@ Ensure that you are in the virtual environment (see above) before issuing these 
     * If it is a **unit testing-only** dependency, add it under `testing =` in `setup.cfg` and
       `deps =` in `tox.ini`.
     * If it is a **testing and development** dependency, add it under `development =` in
+      `setup.cfg`.
+    * If it is specific to a **GitHub Actions** workflow, add it under `github_actions =` in
       `setup.cfg`.
     * If it is a **production/runtime** dependency, add it under `install_requires =` in
       `setup.cfg`.
@@ -58,10 +67,22 @@ pip install -r requirements.txt         # Run this after running either of the a
 ## Unit Testing
 
 To run the unit tests, ensure you are in the virtual environment with development or testing
-dependencies installed (see above) and run one of the following commands in this project's root
-directory:
+dependencies installed (see above) if running tests via `setup.py`, otherwise ensure you are **not**
+in a virtual environment if running tests via `tox`. Then, run the corresponding command in this
+project's root directory:
 
 ```bash
 python setup.py test # Run unit tests using your current virtual environment's Python interpreter
 tox                  # Run unit tests using tox (requires that you have the necessary Python interpreters on your machine)
 ```
+
+## Formatting Code
+
+This project uses [yapf](https://github.com/google/yapf) to handle formatting, and contributions to
+its code are expected to be formatted with YAPF (within reason) using the settings in
+[.style.yapf](.style.yapf).
+
+If YAPF is mangling your code in an unmaintainable fashion, you can selectively disable it using the
+comments `# yapf: disable` and `# yapf: enable`. Whenever the former appears, the latter must appear
+afterwards (this project will not tolerate disabling YAPF for large code blocks and/or entire
+files). Disabling YAPF should be done sparingly.
