@@ -146,7 +146,7 @@ def main() -> None:
                 fail()
             else:
                 total_success = patch_versions(
-                    domain, targeted_workspaces, desired_version, write_output=True
+                    domain, targeted_workspaces, new_version=desired_version, write_output=True
                 )
                 if not total_success:
                     # There is no need to write any error messages because a report is written by
@@ -156,7 +156,7 @@ def main() -> None:
         total_success = lock_or_unlock_workspaces(
             domain,
             targeted_workspaces,
-            lock=argument_dictionary["lock_workspaces"],
+            set_lock=argument_dictionary["lock_workspaces"],
             write_output=True
         )
         if not total_success:

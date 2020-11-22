@@ -5,6 +5,7 @@
 3. [Updating Dependencies](#updating-dependencies)
 4. [Unit Testing](#unit-testing)
 5. [Formatting Code](#formatting-code)
+6. [Changelog](#changelog)
 
 ## Development Workspace Setup
 
@@ -93,3 +94,9 @@ includes:
   by an underscore)
 * All method parameters and method return values
 * Any declaration that may have a non-obvious, ambiguous, or otherwise complex type signature
+
+## Changelog
+
+This project uses a [CHANGELOG.md](CHANGELOG.md) to track changes. Please update this document along
+with your changes when you make a pull request. You should use the formatting that is already in
+place (see the document for more information).

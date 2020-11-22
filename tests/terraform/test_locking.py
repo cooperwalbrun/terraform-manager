@@ -32,7 +32,7 @@ def test_lock_or_unlock_workspaces(mocker: MockerFixture) -> None:
             )
             assert not lock_or_unlock_workspaces(
                 TEST_TERRAFORM_DOMAIN, [_test_workspace1, _test_workspace2],
-                lock=test,
+                set_lock=test,
                 write_output=True
             )
             # yapf: disable

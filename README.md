@@ -7,9 +7,11 @@
     2. [Environment Variable Storing the Credentials File Location](#environment-variable-storing-the-credentials-file-location)
     3. [Environment Variable Storing the Token](#environment-variable-storing-the-token)
 4. [Usage (CLI)](#usage-cli)
-    1. [Selecting Workspaces](#selecting-workspaces)
-    2. [Operations](#operations)
+    1. [Selecting Workspaces (CLI)](#selecting-workspaces-cli)
+    2. [Operations (CLI)](#operations-cli)
 5. [Usage (Python)](#usage-python)
+    1. [Selecting Workspaces (Python)](#selecting-workspaces-python)
+    2. [Operations (Python)](#operations-python)
 6. [Contributing](#contributing)
 
 ## Overview
@@ -26,7 +28,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Automatic pagination for applicable Terraform API endpoints (when your organization has enough
   workspaces to mandate pagination)
 * Designed to be usable as either a CLI tool or called from Python code:
-    * System exits are centralized to the CLI entrypoint
+    * System exits are centralized at the CLI entrypoint
     * All console output is suppressed by default (opt-in)
 * Powerful functionality for selecting an organization's workspaces to target with operations:
     * Select workspaces in either whitelist or blacklist style
@@ -81,7 +83,7 @@ they work together.
 
 All ensuing examples use a Terraform organization name of `example123`.
 
-### Selecting Workspaces
+### Selecting Workspaces (CLI)
 
 ```bash
 # Select all workspaces in example123
@@ -100,7 +102,7 @@ terraform-manager example123 <operation> -w aws*
 terraform-manager example123 <operation> -w aws* -b
 ```
 
-### Operations
+### Operations (CLI)
 
 >Note: the operations shown below can be combined with the selection arguments shown above.
 
@@ -111,16 +113,66 @@ terraform-manager example123 --version-summary
 # Upgrade workspace versions to the given version and write a report to STDOUT
 terraform-manager example123 --patch-versions 0.13.5
 
-# Lock workspaces
+# Lock workspaces and write a report to STDOUT
 terraform-manager example123 --lock
 
-# Unlock workspaces
+# Unlock workspaces and write a report to STDOUT
 terraform-manager example123 --unlock
 ```
 
 ## Usage (Python)
 
-Documentation coming soon!
+All ensuing examples use a Terraform organization name of `example123`.
+
+### Selecting Workspaces (Python)
+
+>Note: all `fetch_all` operations are safe and do not need to be wrapped in a `try`-`except`.
+
+```python
+from typing import List
+from terraform_manager.entities.workspace import Workspace
+from terraform_manager.terraform.workspaces import fetch_all
+
+# Select all workspaces in example123
+workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123")
+
+# Select all workspaces in example123 at a custom domain
+workspaces: List[Workspace] = fetch_all("something.mycompany.com", "example123")
+
+# Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
+workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123", workspaces=["workspace1", "workspace2"])
+
+# Select workspaces that begin with "aws" (case-insensitive)
+workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123", workspaces=["aws*"])
+
+# Select workspaces that do NOT begin with "aws" (case-insensitive)
+workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123", workspaces=["aws*"], blacklist=True)
+```
+
+### Operations (Python)
+
+>Note: all operations are safe and do not need to be wrapped in a `try`-`except`.
+
+```python
+from typing import List
+from terraform_manager.entities.workspace import Workspace
+from terraform_manager.terraform.workspaces import fetch_all
+from terraform_manager.terraform.versions import patch_versions
+from terraform_manager.terraform.locking import lock_or_unlock_workspaces
+
+# Have a list of workspaces fetched using e.g. one of the methods shown above
+domain: str = "app.terraform.io"
+workspaces: List[Workspace] = fetch_all(domain, "example123")
+
+# Upgrade workspace versions to the given version
+success: bool = patch_versions(domain, workspaces, new_version="0.13.5")
+
+# Lock workspaces
+success: bool = lock_or_unlock_workspaces(domain, workspaces, set_lock=True)
+
+# Unlock workspaces
+success: bool = lock_or_unlock_workspaces(domain, workspaces, set_lock=False)
+```
 
 ## Contributing
 

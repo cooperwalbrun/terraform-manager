@@ -50,8 +50,8 @@ def check_versions(workspaces: List[Workspace], new_version: str) -> bool:
 def patch_versions(
     terraform_domain: str,
     workspaces: List[Workspace],
-    new_version: str,
     *,
+    new_version: str,
     write_output: bool = False
 ) -> bool:
     """

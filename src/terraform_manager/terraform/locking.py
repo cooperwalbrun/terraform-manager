@@ -12,7 +12,7 @@ def lock_or_unlock_workspaces(
     terraform_domain: str,
     workspaces: List[Workspace],
     *,
-    lock: bool,
+    set_lock: bool,
     write_output: bool = False
 ) -> bool:
     """
@@ -21,14 +21,15 @@ def lock_or_unlock_workspaces(
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
     :param workspaces: The workspaces to lock or unlock.
-    :param lock: Whether to lock the workspaces. If False, the workspaces will be unlocked.
+    :param set_lock: The desired state of the workspaces' locks. If True, workspaces will be locked.
+                     If False, workspaces will be unlocked.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
     :return: Whether all lock/unlock operations were successful. If even a single one failed,
              returns False.
     """
 
     headers = get_api_headers(terraform_domain, write_error_messages=write_output)
-    operation = "lock" if lock else "unlock"
+    operation = "lock" if set_lock else "unlock"
     base_url = f"https://{terraform_domain}/api/v2"
     report = []
     all_successful = True
@@ -36,7 +37,7 @@ def lock_or_unlock_workspaces(
         url = f"{base_url}/workspaces/{workspace.workspace_id}/actions/{operation}"
         response = safe_http_request(lambda: throttle(lambda: requests.post(url, headers=headers)))
         if response.status_code == 200 or response.status_code == 409:
-            report.append([workspace.name, workspace.is_locked, lock, "success", "none"])
+            report.append([workspace.name, workspace.is_locked, set_lock, "success", "none"])
         else:
             all_successful = False
             report.append([

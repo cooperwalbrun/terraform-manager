@@ -35,7 +35,7 @@ def fetch_all(
     *,
     workspaces: Optional[List[str]] = None,
     blacklist: bool = False,
-    write_error_messages: bool = True
+    write_error_messages: bool = False
 ) -> List[Workspace]:
     """
     Fetch all workspaces (or a subset if desired) from a particular Terraform organization.
