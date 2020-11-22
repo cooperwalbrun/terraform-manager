@@ -66,6 +66,9 @@ def patch_versions(
              False.
     """
 
+    if not check_versions(workspaces, new_version):
+        return False
+
     json = {"data": {"type": "workspaces", "attributes": {"terraform-version": new_version}}}
     report = []
 

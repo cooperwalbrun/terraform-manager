@@ -86,3 +86,10 @@ If YAPF is mangling your code in an unmaintainable fashion, you can selectively 
 comments `# yapf: disable` and `# yapf: enable`. Whenever the former appears, the latter must appear
 afterwards (this project will not tolerate disabling YAPF for large code blocks and/or entire
 files). Disabling YAPF should be done sparingly.
+
+In addition to YAPF formatting, code should be appropriately accompanied by type annotations. This
+includes:
+* Variables and constants in global scope (regardless of whether the variable is preceded
+  by an underscore)
+* All method parameters and method return values
+* Any declaration that may have a non-obvious, ambiguous, or otherwise complex type signature

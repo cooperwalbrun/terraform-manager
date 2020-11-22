@@ -1,6 +1,6 @@
 import sys
 from argparse import ArgumentParser, Namespace
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 import semver
 from terraform_manager.entities.workspace import Workspace
@@ -20,7 +20,7 @@ _parser.add_argument(
     help="The name of the organization to target within your Terraform installation (see --url)."
 )
 _parser.add_argument(
-    "--domain",
+    "--domain",  # We do not alias this with "-d" to avoid confusion around "-d" meaning "delete"
     type=str,
     metavar="<domain>",
     dest="domain",
@@ -43,7 +43,7 @@ _parser.add_argument(
     )
 )
 _parser.add_argument(
-    "-b"
+    "-b",
     "--blacklist",
     action="store_true",
     dest="blacklist",
@@ -89,7 +89,7 @@ def fail() -> None:
 
 def main() -> None:
     arguments: Namespace = _parser.parse_args()
-    argument_dictionary = vars(arguments)
+    argument_dictionary: Dict[str, Any] = vars(arguments)
 
     organization: str = argument_dictionary["organization"]
     raw_domain: Optional[str] = argument_dictionary.get("domain")
@@ -98,10 +98,12 @@ def main() -> None:
     blacklist: bool = argument_dictionary["blacklist"]
 
     if workspaces_to_target is None and blacklist:
-        print(
-            "The blacklist flag is only applicable when you specify a workspace(s) to filter on.",
-            file=sys.stderr
-        )
+        # yapf: disable
+        print((
+            "Error: the blacklist flag is only applicable when you specify a workspace(s) to "
+            "filter on."
+        ), file=sys.stderr)
+        # yapf: enable
         fail()
 
     targeted_workspaces: List[Workspace] = workspaces.fetch_all(
@@ -114,9 +116,11 @@ def main() -> None:
     if len(targeted_workspaces) == 0:
         if workspaces_to_target is not None:
             names = ", ".join(workspaces_to_target)
-            print(f'No workspaces could be found with these name(s): {names}', file=sys.stderr)
+            print(
+                f'Error: no workspaces could be found with these name(s): {names}', file=sys.stderr
+            )
         else:
-            print("No workspaces could be found in your organization.", file=sys.stderr)
+            print("Error: no workspaces could be found in your organization.", file=sys.stderr)
         fail()
     elif argument_dictionary["version_summary"]:
         data = group_by_version(targeted_workspaces)
@@ -124,10 +128,12 @@ def main() -> None:
     elif argument_dictionary.get("patch_versions") is not None:
         desired_version = argument_dictionary["patch_versions"]
         if not semver.VersionInfo.isvalid(desired_version) and desired_version != LATEST_VERSION:
-            print(
-                f"The value for patch_versions you specified ({desired_version}) is not valid.",
-                file=sys.stderr
-            )
+            # yapf: disable
+            print((
+                f"Error: the value for patch_versions you specified ({desired_version}) is not "
+                f"valid."
+            ), file=sys.stderr)
+            # yapf: enable
             fail()
         else:
             if not check_versions(targeted_workspaces, desired_version):
@@ -143,6 +149,8 @@ def main() -> None:
                     domain, targeted_workspaces, desired_version, write_output=True
                 )
                 if not total_success:
+                    # There is no need to write any error messages because a report is written by
+                    # the patch_versions method
                     fail()
     elif argument_dictionary["lock_workspaces"] or argument_dictionary["unlock_workspaces"]:
         total_success = lock_or_unlock_workspaces(
@@ -152,6 +160,8 @@ def main() -> None:
             write_output=True
         )
         if not total_success:
+            # There is no need to write any error messages because a report is written by
+            # the lock_or_unlock_workspaces method
             fail()
 
 
