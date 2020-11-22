@@ -17,7 +17,7 @@ operation_group = _parser.add_mutually_exclusive_group(required=True)
 _parser.add_argument(
     "organization",
     type=str,
-    help="The name of the organization to target within your Terraform installation (see --url)."
+    help="The name of the organization to target within your Terraform installation (see --domain)."
 )
 _parser.add_argument(
     "--domain",  # We do not alias this with "-d" to avoid confusion around "-d" meaning "delete"
