@@ -37,6 +37,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * View a high-level Terraform version summary of selected workspaces
     * Bulk lock or unlock selected workspaces
     * Bulk update the Terraform version of selected workspaces
+    * Bulk update the working directory of selected workspaces
 
 ## Installation
 
@@ -47,17 +48,23 @@ something like
 pip install terraform-manager
 ```
 
+>Note: if you are planning to target a Terraform Enterprise installation that has private TLS
+>certificate security, you may have to import your custom client certificate(s) into `certifi`'s
+>`cacert.pem` before `terraform-manager` operations will function properly.
+
 ## Configuration
 
 All that needs to be configured in order to use this module is a token or credentials file for
 interacting with the Terraform API. There are several ways to do this; the primary methods are
-described below. For the first two options, there is corresponding
-[documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).
+described below.
 
 The order of precedence for these approaches is as follows:
 1. Environment Variable Storing the Token
 2. Terraform CLI Configuration
 3. Environment Variable Storing the Credentials File Location
+
+For options 2 and 3, there is corresponding
+[documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).
 
 ### Terraform CLI Configuration
 

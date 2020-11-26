@@ -90,8 +90,8 @@ files). Disabling YAPF should be done sparingly.
 
 In addition to YAPF formatting, code should be appropriately accompanied by type annotations. This
 includes:
-* Variables and constants in global scope (regardless of whether the variable is preceded
-  by an underscore)
+* Variables and constants in global scope (regardless of whether the variable name is prefixed with
+  an underscore)
 * All method parameters and method return values
 * Any declaration that may have a non-obvious, ambiguous, or otherwise complex type signature
 
