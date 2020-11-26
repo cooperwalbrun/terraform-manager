@@ -27,7 +27,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Adherence to Terraform's API rate limits
 * Automatic pagination for applicable Terraform API endpoints (when your organization has enough
   workspaces to mandate pagination)
-* Designed to be usable as either a CLI tool or called from Python code:
+* Designed to either be usable as a CLI tool or called directly from Python code:
     * System exits are centralized at the CLI entrypoint
     * All console output is suppressed by default (opt-in)
 * Powerful functionality for selecting an organization's workspaces to target with operations:
@@ -48,9 +48,9 @@ something like
 pip install terraform-manager
 ```
 
->Note: if you are planning to target a Terraform Enterprise installation that has private TLS
->certificate security, you may have to import your custom client certificate(s) into `certifi`'s
->`cacert.pem` before `terraform-manager` operations will function properly.
+>Note: if you are planning to target a Terraform Enterprise installation that uses a private CA for
+>SSL/TLS, you may have to import your custom client certificate(s) into `certifi`'s `cacert.pem`
+>before `terraform-manager` operations will function properly.
 
 ## Configuration
 
