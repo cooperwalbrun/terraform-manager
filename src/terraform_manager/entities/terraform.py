@@ -99,7 +99,7 @@ class Terraform:
         write_version_summary(
             self.terraform_domain,
             self.organization,
-            self.workspace_names is None,
+            self.workspace_names is not None,
             group_by_version(self.workspaces)
         )
 
