@@ -8,7 +8,7 @@ from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import pagination, get_api_headers
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import safe_http_request
+from terraform_manager.utilities.utilities import safe_http_request, get_protocol
 
 
 def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
@@ -37,6 +37,7 @@ def fetch_all(
     *,
     workspace_names: Optional[List[str]] = None,
     blacklist: bool = False,
+    no_tls: bool = False,
     write_error_messages: bool = False
 ) -> List[Workspace]:
     """
@@ -48,6 +49,7 @@ def fetch_all(
     :param workspace_names: The name(s) of workspace(s) for which data should be fetched. If not
                        specified, all workspace data will be fetched.
     :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
+    :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param write_error_messages: Whether to write error messages to STDERR.
     :return: The workspace objects corresponding to the given criteria.
     """
@@ -62,10 +64,11 @@ def fetch_all(
                 return not blacklist
         return blacklist
 
+    base_url = f"{get_protocol(no_tls)}://{terraform_domain}/api/v2"
     return [
         workspace for workspace in itertools.chain.from_iterable(
             pagination.exhaust_pages(
-                f"https://{terraform_domain}/api/v2/organizations/{organization}/workspaces",
+                f"{base_url}/organizations/{organization}/workspaces",
                 json_mapper=_map_workspaces,
                 write_error_messages=write_error_messages
             )
@@ -80,6 +83,7 @@ def batch_operation(
     json: Dict[str, Any],
     on_success: Callable[[Workspace], None],
     on_failure: Callable[[Workspace, Union[Response, ErrorResponse]], None],
+    no_tls: bool = False,
     write_output: bool = False
 ) -> bool:
     """
@@ -94,6 +98,7 @@ def batch_operation(
                        been successfully patched.
     :param on_failure: A function which will be passed a workspace object when that workspace has
                        not been successfully patched.
+    :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
     :return: Whether all patch operations were successful. If even a single one failed, returns
              False.
@@ -101,8 +106,9 @@ def batch_operation(
 
     headers = get_api_headers(terraform_domain, write_error_messages=write_output)
     all_successful = True
+    base_url = f"{get_protocol(no_tls)}://{terraform_domain}/api/v2"
     for workspace in workspaces:
-        url = f"https://{terraform_domain}/api/v2/workspaces/{workspace.workspace_id}"
+        url = f"{base_url}/workspaces/{workspace.workspace_id}"
         response = safe_http_request(
             lambda: throttle(lambda: requests.patch(url, json=json, headers=headers))
         )

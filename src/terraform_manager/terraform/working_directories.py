@@ -13,6 +13,7 @@ def patch_working_directories(
     workspaces: List[Workspace],
     *,
     new_working_directory: Optional[str],
+    no_tls: bool = False,
     write_output: bool = False
 ) -> bool:
     """
@@ -23,6 +24,7 @@ def patch_working_directories(
     :param organization: The organization containing the workspaces to patch.
     :param workspaces: The workspaces to patch.
     :param new_working_directory: The new working directory to assign to the workspaces.
+    :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
     :return: Whether all patch operations were successful. If even a single one failed, returns
              False.
@@ -68,6 +70,7 @@ def patch_working_directories(
         json=json,
         on_success=on_success,
         on_failure=on_failure,
+        no_tls=no_tls,
         write_output=write_output
     )
 

@@ -98,5 +98,6 @@ includes:
 ## Changelog
 
 This project uses a [CHANGELOG.md](CHANGELOG.md) to track changes. Please update this document along
-with your changes when you make a pull request. You should use the formatting that is already in
-place (see the document for more information).
+with your changes when you make a pull request (you can place your changes beneath the `Unreleased`
+section near the top). You should use the formatting that is already in place (see the document for
+more information).

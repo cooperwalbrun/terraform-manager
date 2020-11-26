@@ -26,6 +26,17 @@ _parser.add_argument(
         "domain will be used."
     )
 )
+_parser.add_argument(
+    "--no-ssl",
+    "--no-tls",
+    action="store_true",
+    dest="no_tls",
+    help=(
+        "NOT RECOMMENDED. Disables HTTPS interactions with the Terraform API in favor of HTTP. "
+        "This option should only be used when targeting a Terraform Enterprise installation that "
+        "does not have SSL/TLS enabled."
+    )
+)
 
 _parser.add_argument(
     "-w",
@@ -107,11 +118,18 @@ def main() -> None:
 
     organization: str = argument_dictionary["organization"]
     raw_domain: Optional[str] = argument_dictionary.get("domain")
-    domain: str = "app.terraform.io" if raw_domain is None else raw_domain
+    domain: str = "app.terraform.io" if raw_domain is None else raw_domain.lower()
     workspaces_to_target: Optional[List[str]] = argument_dictionary.get("workspaces")
     blacklist: bool = argument_dictionary["blacklist"]
+    no_tls: bool = argument_dictionary["no_tls"]
 
-    if workspaces_to_target is None and blacklist:
+    if domain == "app.terraform.io" and no_tls:
+        print(
+            "Error: you should never disable SSL/TLS when interacting with Terraform Cloud.",
+            file=sys.stderr
+        )
+        fail()
+    elif workspaces_to_target is None and blacklist:
         # yapf: disable
         print((
             "Error: the blacklist flag is only applicable when you specify a workspace(s) to "
@@ -125,6 +143,7 @@ def main() -> None:
             organization,
             workspace_names=workspaces_to_target,
             blacklist=blacklist,
+            no_tls=no_tls,
             write_output=True
         )
         if len(terraform.workspaces) == 0:

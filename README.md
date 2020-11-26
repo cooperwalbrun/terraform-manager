@@ -27,7 +27,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Adherence to Terraform's API rate limits
 * Automatic pagination for applicable Terraform API endpoints (when your organization has enough
   workspaces to mandate pagination)
-* Designed to be usable as either a CLI tool or called from Python code:
+* Designed to either be usable as a CLI tool or called directly from Python code:
     * System exits are centralized at the CLI entrypoint
     * All console output is suppressed by default (opt-in)
 * Powerful functionality for selecting an organization's workspaces to target with operations:
@@ -48,9 +48,9 @@ something like
 pip install terraform-manager
 ```
 
->Note: if you are planning to target a Terraform Enterprise installation that has private TLS
->certificate security, you may have to import your custom client certificate(s) into `certifi`'s
->`cacert.pem` before `terraform-manager` operations will function properly.
+>Note: if you are planning to target a Terraform Enterprise installation that uses a private CA for
+>SSL/TLS, you may have to import your custom client certificate(s) into `certifi`'s `cacert.pem`
+>before `terraform-manager` operations will function properly.
 
 ## Configuration
 
@@ -98,6 +98,9 @@ terraform-manager example123 <operation>
 
 # Select all workspaces in example123 at a custom domain
 terraform-manager example123 --domain something.mycompany.com <operation>
+
+# Select all workspaces in example123 at a custom domain with HTTP instead of HTTPS
+terraform-manager example123 --domain something.mycompany.com --no-tls <operation>
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
 terraform-manager example123 <operation> -w workspace1 workspace3
@@ -147,6 +150,9 @@ terraform = Terraform("app.terraform.io", "example123")
 
 # Select all workspaces in example123 at a custom domain
 terraform = Terraform("something.mycompany.com", "example123")
+
+# Select all workspaces in example123 at a custom domain with HTTP instead of HTTPS
+terraform = Terraform("something.mycompany.com", "example123", no_tls=True)
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
 terraform = Terraform("app.terraform.io", "example123", workspaces=["workspace1", "workspace2"])

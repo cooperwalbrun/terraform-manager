@@ -5,7 +5,7 @@ from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import get_api_headers
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import safe_http_request
+from terraform_manager.utilities.utilities import safe_http_request, get_protocol
 
 
 def lock_or_unlock_workspaces(
@@ -14,6 +14,7 @@ def lock_or_unlock_workspaces(
     workspaces: List[Workspace],
     *,
     set_lock: bool,
+    no_tls: bool = False,
     write_output: bool = False
 ) -> bool:
     """
@@ -25,6 +26,7 @@ def lock_or_unlock_workspaces(
     :param workspaces: The workspaces to lock or unlock.
     :param set_lock: The desired state of the workspaces' locks. If True, workspaces will be locked.
                      If False, workspaces will be unlocked.
+    :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
     :return: Whether all lock/unlock operations were successful. If even a single one failed,
              returns False.
@@ -32,7 +34,7 @@ def lock_or_unlock_workspaces(
 
     headers = get_api_headers(terraform_domain, write_error_messages=write_output)
     operation = "lock" if set_lock else "unlock"
-    base_url = f"https://{terraform_domain}/api/v2"
+    base_url = f"{get_protocol(no_tls)}://{terraform_domain}/api/v2"
     report = []
     all_successful = True
     for workspace in workspaces:
