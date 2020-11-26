@@ -2,7 +2,7 @@ name: Tags
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 jobs:
   upload:
     name: Upload to PyPI
