@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 - 2020-11-26
+
+### Added
+
+* Unit tests (95% code coverage) for `__main__.py` to test CLI interactions (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Changed
+
+* Python interactions with the module are now centered around the new `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* `README.md` Python usage examples now use the new `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* CLI functionality now uses the new `Terraform` class under the hood (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* The print width of the version summary's "Workspaces" column was increased from 70 to 80 characters (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
 ## 0.2.0 - 2020-11-22
 
 ### Added

@@ -37,6 +37,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * View a high-level Terraform version summary of selected workspaces
     * Bulk lock or unlock selected workspaces
     * Bulk update the Terraform version of selected workspaces
+    * Bulk update the working directory of selected workspaces
 
 ## Installation
 
@@ -47,17 +48,23 @@ something like
 pip install terraform-manager
 ```
 
+>Note: if you are planning to target a Terraform Enterprise installation that has private TLS
+>certificate security, you may have to import your custom client certificate(s) into `certifi`'s
+>`cacert.pem` before `terraform-manager` operations will function properly.
+
 ## Configuration
 
 All that needs to be configured in order to use this module is a token or credentials file for
 interacting with the Terraform API. There are several ways to do this; the primary methods are
-described below. For the first two options, there is corresponding
-[documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).
+described below.
 
 The order of precedence for these approaches is as follows:
 1. Environment Variable Storing the Token
 2. Terraform CLI Configuration
 3. Environment Variable Storing the Credentials File Location
+
+For options 2 and 3, there is corresponding
+[documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).
 
 ### Terraform CLI Configuration
 
@@ -132,60 +139,56 @@ All ensuing examples use a Terraform organization name of `example123`.
 
 ### Selecting Workspaces (Python)
 
->Note: all `fetch_all` operations are safe and do not need to be wrapped in a `try`-`except`.
-
 ```python
-from typing import List
-from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform.workspaces import fetch_all
+from terraform_manager.entities.terraform import Terraform
 
 # Select all workspaces in example123
-workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123")
+terraform = Terraform("app.terraform.io", "example123")
 
 # Select all workspaces in example123 at a custom domain
-workspaces: List[Workspace] = fetch_all("something.mycompany.com", "example123")
+terraform = Terraform("something.mycompany.com", "example123")
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
-workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123", workspaces=["workspace1", "workspace2"])
+terraform = Terraform("app.terraform.io", "example123", workspaces=["workspace1", "workspace2"])
 
 # Select workspaces that begin with "aws" (case-insensitive)
-workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123", workspaces=["aws*"])
+terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"])
 
 # Select workspaces that do NOT begin with "aws" (case-insensitive)
-workspaces: List[Workspace] = fetch_all("app.terraform.io", "example123", workspaces=["aws*"], blacklist=True)
+terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"], blacklist=True)
+```
+
+After constructing an instance of `Terraform`, you can access the selected workspaces like so:
+
+```python
+terraform = Terraform(...)
+workspaces = terraform.workspaces
 ```
 
 ### Operations (Python)
 
->Note: all operations are safe and do not need to be wrapped in a `try`-`except`.
+>Note: these operations are safe and do not need to be wrapped in a `try`-`except`.
 
 ```python
-from typing import List
-from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform.locking import lock_or_unlock_workspaces
-from terraform_manager.terraform.versions import patch_versions
-from terraform_manager.terraform.working_directories import patch_working_directories
-from terraform_manager.terraform.workspaces import fetch_all
+from terraform_manager.entities.terraform import Terraform
 
 # Have a list of workspaces fetched using e.g. one of the methods shown above
-domain: str = "app.terraform.io"
-organization: str = "example123"
-workspaces: List[Workspace] = fetch_all(domain, organization)
+terraform = Terraform("app.terraform.io", "example123")
 
 # Upgrade workspace versions to 0.13.5
-success: bool = patch_versions(domain, organization, workspaces, new_version="0.13.5")
+success = terraform.patch_versions("0.13.5")
 
 # Lock workspaces
-success: bool = lock_or_unlock_workspaces(domain, organization, workspaces, set_lock=True)
+success = terraform.lock_workspaces()
 
 # Unlock workspaces
-success: bool = lock_or_unlock_workspaces(domain, organization, workspaces, set_lock=False)
+success = terraform.unlock_workspaces()
 
 # Set working directories to "dev"
-success: bool = patch_working_directories(domain, organization, workspaces, new_working_directory="dev")
+success = terraform.set_working_directories("dev")
 
 # Set working directories to empty
-success: bool = patch_working_directories(domain, organization, workspaces, new_working_directory=None)
+success = terraform.set_working_directories(None)
 ```
 
 ## Contributing

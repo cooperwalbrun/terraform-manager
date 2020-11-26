@@ -1,5 +1,6 @@
 import random
 import string
+from unittest.mock import MagicMock
 
 from pytest_mock import MockerFixture
 from terraform_manager.entities.workspace import Workspace
@@ -9,8 +10,8 @@ TEST_TERRAFORM_DOMAIN: str = "app.terraform.io"
 TEST_API_URL: str = f"https://{TEST_TERRAFORM_DOMAIN}/api/v2"
 
 
-def establish_credential_mocks(mocker: MockerFixture) -> None:
-    mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
+def establish_credential_mocks(mocker: MockerFixture) -> MagicMock:
+    return mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
 
 
 def test_workspace(

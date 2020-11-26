@@ -3,7 +3,6 @@ branch = true
 source = terraform_manager
 omit =
     **/terraform_manager/__init__.py
-    **/terraform_manager/__main__.py
 
 [report]
 fail_under = 95

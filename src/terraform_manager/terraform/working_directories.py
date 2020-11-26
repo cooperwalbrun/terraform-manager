@@ -16,7 +16,7 @@ def patch_working_directories(
     write_output: bool = False
 ) -> bool:
     """
-    Patches the working directory for each of a given list of workspaces.
+    Patches the working directories of the workspaces.
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).

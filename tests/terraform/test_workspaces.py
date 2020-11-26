@@ -64,7 +64,7 @@ def test_fetch_all_workspaces_with_filter(mocker: MockerFixture) -> None:
     assert fetch_all(
         TEST_TERRAFORM_DOMAIN,
         _test_organization,
-        workspaces=[_test_workspace2.name],
+        workspace_names=[_test_workspace2.name],
         blacklist=False
     ) == [_test_workspace2]
 
@@ -80,7 +80,7 @@ def test_fetch_all_workspaces_with_wildcard_filter(mocker: MockerFixture) -> Non
         status=200
     )
     assert fetch_all(
-        TEST_TERRAFORM_DOMAIN, _test_organization, workspaces=["*"], blacklist=False
+        TEST_TERRAFORM_DOMAIN, _test_organization, workspace_names=["*"], blacklist=False
     ) == [_test_workspace1, _test_workspace2]
 
 
@@ -97,7 +97,7 @@ def test_fetch_all_workspaces_with_inverted_filter(mocker: MockerFixture) -> Non
     assert fetch_all(
         TEST_TERRAFORM_DOMAIN,
         _test_organization,
-        workspaces=[_test_workspace2.name],
+        workspace_names=[_test_workspace2.name],
         blacklist=True
     ) == [_test_workspace1]
 
@@ -113,7 +113,7 @@ def test_fetch_all_workspaces_with_inverted_wildcard_filter(mocker: MockerFixtur
         status=200
     )
     assert fetch_all(
-        TEST_TERRAFORM_DOMAIN, _test_organization, workspaces=["*"], blacklist=True
+        TEST_TERRAFORM_DOMAIN, _test_organization, workspace_names=["*"], blacklist=True
     ) == []
 
 
