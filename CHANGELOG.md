@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Added an optional new `--no-tls` flag to enable Terraform API interactions via HTTP instead of HTTPS (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
+### Changed
+
+* Moved the fetch of workspaces out of the constructor of the `Terraform` class; it will now only occur when needed (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
 ## 0.3.1 - 2020-11-26
 
 ### Fixed

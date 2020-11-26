@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 from terraform_manager.terraform.versions import check_versions, patch_versions, \
     write_version_summary, group_by_version
@@ -24,14 +25,19 @@ class Terraform:
         self.blacklist = blacklist
         self.no_tls = no_tls
         self.write_output = write_output
+        self._workspace_cache: Optional[List[Workspace]] = None
 
-        self.workspaces = fetch_all(
-            terraform_domain,
-            organization,
-            workspace_names=workspace_names,
-            blacklist=blacklist,
-            write_error_messages=write_output
-        )
+    @property
+    def workspaces(self) -> List[Workspace]:
+        if self._workspace_cache is None:
+            self._workspace_cache = fetch_all(
+                self.terraform_domain,
+                self.organization,
+                workspace_names=self.workspace_names,
+                blacklist=self.blacklist,
+                write_error_messages=self.write_output
+            )
+        return self._workspace_cache
 
     def lock_workspaces(self) -> bool:
         """
