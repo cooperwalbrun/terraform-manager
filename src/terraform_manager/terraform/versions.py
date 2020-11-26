@@ -1,5 +1,5 @@
 import os
-from textwrap import wrap
+import textwrap
 from typing import List, Dict, Union
 
 from requests import Response
@@ -56,7 +56,7 @@ def patch_versions(
     write_output: bool = False
 ) -> bool:
     """
-    Patches the Terraform version for each of a given list of workspaces.
+    Patches the Terraform version of the workspaces.
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
@@ -120,14 +120,14 @@ def write_version_summary(
     data: VersionSummary
 ) -> None:
     """
-    Writes a tabulated summary of the organization's workspaces and their versions to STDOUT. Long
-    lines will be wrapped automatically.
+    Writes a tabulated summary of the workspaces and their versions to STDOUT. Long lines will be
+    wrapped automatically.
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
     :param organization: The organization to which this data pertains.
-    :param targeting_specific_workspaces: Whether one or more workspaces was specified on the
-                                          command line, thereby filtering the data down.
+    :param targeting_specific_workspaces: Whether one or more workspaces was specified in order to
+                                          filter the list of workspaces when they were fetched.
     :param data: The raw data to format and print to STDOUT.
     :return: None
     """
@@ -139,7 +139,7 @@ def write_version_summary(
         for version, workspaces in data.items():
             formatted_workspaces = ", ".join(sorted([workspace.name for workspace in workspaces]))
             formatted_workspaces = os.linesep.join(
-                wrap(formatted_workspaces, width=70, break_long_words=False)
+                textwrap.wrap(formatted_workspaces, width=80, break_long_words=False)
             )
             table_data.append([version, formatted_workspaces])
     else:

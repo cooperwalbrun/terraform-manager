@@ -35,7 +35,7 @@ def fetch_all(
     terraform_domain: str,
     organization: str,
     *,
-    workspaces: Optional[List[str]] = None,
+    workspace_names: Optional[List[str]] = None,
     blacklist: bool = False,
     write_error_messages: bool = False
 ) -> List[Workspace]:
@@ -45,14 +45,16 @@ def fetch_all(
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
     :param organization: The organization for which to fetch workspace data.
-    :param workspaces: The name(s) of workspace(s) for which data should be fetched. If not
+    :param workspace_names: The name(s) of workspace(s) for which data should be fetched. If not
                        specified, all workspace data will be fetched.
     :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
     :param write_error_messages: Whether to write error messages to STDERR.
     :return: The workspace objects corresponding to the given criteria.
     """
 
-    lower_workspaces = [] if workspaces is None else [workspace.lower() for workspace in workspaces]
+    lower_workspaces = [] if workspace_names is None else [
+        workspace.lower() for workspace in workspace_names
+    ]
 
     def is_returnable(workspace: Workspace) -> bool:
         for name in lower_workspaces:
@@ -67,7 +69,7 @@ def fetch_all(
                 json_mapper=_map_workspaces,
                 write_error_messages=write_error_messages
             )
-        ) if workspaces is None or is_returnable(workspace)
+        ) if workspace_names is None or is_returnable(workspace)
     ]
 
 
