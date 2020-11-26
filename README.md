@@ -139,15 +139,6 @@ All ensuing examples use a Terraform organization name of `example123`.
 
 ### Selecting Workspaces (Python)
 
-After constructing an instance of `Terraform`, you can access the selected workspaces like so:
-
-```python
-terraform = Terraform(...)
-workspaces = terraform.workspaces
-```
-
-Here is how you can apply the varying selection criteria:
-
 ```python
 from terraform_manager.entities.terraform import Terraform
 
@@ -165,6 +156,13 @@ terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"])
 
 # Select workspaces that do NOT begin with "aws" (case-insensitive)
 terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"], blacklist=True)
+```
+
+After constructing an instance of `Terraform`, you can access the selected workspaces like so:
+
+```python
+terraform = Terraform(...)
+workspaces = terraform.workspaces
 ```
 
 ### Operations (Python)
