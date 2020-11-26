@@ -99,6 +99,9 @@ terraform-manager example123 <operation>
 # Select all workspaces in example123 at a custom domain
 terraform-manager example123 --domain something.mycompany.com <operation>
 
+# Select all workspaces in example123 at a custom domain with HTTP instead of HTTPS
+terraform-manager example123 --domain something.mycompany.com --no-tls <operation>
+
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
 terraform-manager example123 <operation> -w workspace1 workspace3
 
@@ -147,6 +150,9 @@ terraform = Terraform("app.terraform.io", "example123")
 
 # Select all workspaces in example123 at a custom domain
 terraform = Terraform("something.mycompany.com", "example123")
+
+# Select all workspaces in example123 at a custom domain with HTTP instead of HTTPS
+terraform = Terraform("something.mycompany.com", "example123", no_tls=True)
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
 terraform = Terraform("app.terraform.io", "example123", workspaces=["workspace1", "workspace2"])

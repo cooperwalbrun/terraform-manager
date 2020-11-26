@@ -25,6 +25,10 @@ def parse_domain(url: str) -> str:
     return urlparse(url).netloc
 
 
+def get_protocol(no_tls: bool) -> str:
+    return "http" if no_tls else "https"
+
+
 def safe_http_request(function: Callable[[], Response]) -> Union[Response, ErrorResponse]:
     """
     Attempts to invoke a given function, catching various exceptions raised by the requests library.

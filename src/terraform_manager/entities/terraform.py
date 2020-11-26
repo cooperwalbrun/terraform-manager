@@ -15,12 +15,14 @@ class Terraform:
         *,
         workspace_names: Optional[List[str]] = None,
         blacklist: bool = False,
+        no_tls: bool = False,
         write_output: bool = False
     ):
         self.terraform_domain = terraform_domain
         self.organization = organization
         self.workspace_names = workspace_names
         self.blacklist = blacklist
+        self.no_tls = no_tls
         self.write_output = write_output
 
         self.workspaces = fetch_all(
@@ -43,6 +45,7 @@ class Terraform:
             self.organization,
             self.workspaces,
             set_lock=True,
+            no_tls=self.no_tls,
             write_output=self.write_output
         )
 
@@ -58,6 +61,7 @@ class Terraform:
             self.organization,
             self.workspaces,
             set_lock=False,
+            no_tls=self.no_tls,
             write_output=self.write_output
         )
 
@@ -86,6 +90,7 @@ class Terraform:
             self.organization,
             self.workspaces,
             new_version=new_version,
+            no_tls=self.no_tls,
             write_output=self.write_output
         )
 
@@ -116,18 +121,20 @@ class Terraform:
             self.organization,
             self.workspaces,
             new_working_directory=new_working_directory,
+            no_tls=self.no_tls,
             write_output=self.write_output
         )
 
     def __repr__(self):
         return (
             "Terraform(domain={}, organization={}, workspaces=List[{}], blacklist={}, "
-            "write_output={})"
+            "no_tls={}, write_output={})"
         ).format(
             self.terraform_domain,
             self.organization,
             len(self.workspaces),
             self.blacklist,
+            self.no_tls,
             self.write_output
         )
 

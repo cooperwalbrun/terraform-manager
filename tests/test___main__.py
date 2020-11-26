@@ -17,6 +17,7 @@ def _arguments(merge_with: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     # them
     arguments = {
         "organization": TEST_ORGANIZATION,
+        "no_tls": False,
         "blacklist": False,
         "version_summary": False,
         "lock_workspaces": False,
@@ -38,6 +39,22 @@ def _mock_arguments(mocker: MockerFixture, arguments: Dict[str, Any]) -> MagicMo
 
 def _error_message(text: str) -> call:
     return call(text, file=sys.stderr)
+
+
+def test_no_tls_against_terraform_cloud(mocker: MockerFixture) -> None:
+    print_mock: MagicMock = mocker.patch("builtins.print")
+    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+    _mock_fetch_workspaces(mocker, [])
+    _mock_arguments(mocker, _arguments({"no_tls": True}))
+
+    main()
+
+    print_mock.assert_has_calls([
+        _error_message(
+            "Error: you should never disable SSL/TLS when interacting with Terraform Cloud."
+        )
+    ])
+    fail_mock.assert_called_once()
 
 
 def test_unexpected_blacklist_flag(mocker: MockerFixture) -> None:
