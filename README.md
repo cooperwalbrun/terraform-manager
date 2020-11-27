@@ -33,7 +33,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Flexible credential configuration (multiple ways to specify your Terraform token)
 * Powerful functionality for selecting an organization's workspaces to target with operations:
     * Select workspaces in either whitelist or blacklist style
-    * Select workspaces using [Unix-like filename pattern matching](https://docs.python.org/3/library/fnmatch.html)
+    * Select workspaces using [Unix-like name pattern matching](https://docs.python.org/3/library/fnmatch.html)
 * Numerous operations available:
     * View a high-level Terraform version summary of selected workspaces
     * Bulk lock or unlock selected workspaces
@@ -62,7 +62,8 @@ The order of precedence for these approaches is as follows:
 1. Environment Variable Storing the Token
 2. Terraform CLI Configuration
 3. Environment Variable Storing the Credentials File Location
-4. (Python only) Pass a token to the constructor of the `Terraform` class (see Usage below)
+4. (Python only) Pass a token to the constructor of the `Terraform` class (see
+   [Usage (Python)](#usage-python) below)
 
 For options 2 and 3, there is corresponding
 [documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).

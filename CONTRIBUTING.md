@@ -104,8 +104,8 @@ includes:
 
 ### Imports
 
-Imports should be sorted. Most IDEs support this functionality via keybindings or even on-save
-functionality.
+Imports should be sorted. Most IDEs support this functionality via keybindings or even via on-save
+operations.
 
 ## Changelog
 
