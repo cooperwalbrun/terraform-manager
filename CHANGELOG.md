@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 0.3.2 - 2020-11-27
+
 ### Added
 
 * Added an optional `--no-tls` flag to enable Terraform API interactions via HTTP instead of HTTPS (by [@cooperwalbrun](https://github.com/cooperwalbrun))
