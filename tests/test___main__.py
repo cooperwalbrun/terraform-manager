@@ -130,13 +130,14 @@ def test_patch_versions(mocker: MockerFixture) -> None:
     patch_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.Terraform.patch_versions", return_value=True
     )
+    desired_version = "0.13.5"
     _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"patch_versions": "0.13.5"}))
+    _mock_arguments(mocker, _arguments({"patch_versions": desired_version}))
 
     main()
 
-    check_mock.assert_called_once()
-    patch_mock.assert_called_once()
+    check_mock.assert_called_once_with(desired_version)
+    patch_mock.assert_called_once_with(desired_version)
     fail_mock.assert_not_called()
 
 
@@ -148,13 +149,14 @@ def test_patch_versions_failure(mocker: MockerFixture) -> None:
     patch_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.Terraform.patch_versions", return_value=False
     )
+    desired_version = "0.13.5"
     _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"patch_versions": "0.13.5"}))
+    _mock_arguments(mocker, _arguments({"patch_versions": desired_version}))
 
     main()
 
-    check_mock.assert_called_once()
-    patch_mock.assert_called_once()
+    check_mock.assert_called_once_with(desired_version)
+    patch_mock.assert_called_once_with(desired_version)
     fail_mock.assert_called_once()
 
 
@@ -184,11 +186,12 @@ def test_patch_versions_downgrade_version(mocker: MockerFixture) -> None:
     _mock_fetch_workspaces(mocker, [_test_workspace1])
     # The version specified below does not actually matter for this test because we are forcing
     # False to return from check_versions with the mock above
-    _mock_arguments(mocker, _arguments({"patch_versions": "0.13.0"}))
+    desired_version = "0.13.0"
+    _mock_arguments(mocker, _arguments({"patch_versions": desired_version}))
 
     main()
 
-    check_mock.assert_called_once()
+    check_mock.assert_called_once_with(desired_version)
     print_mock.assert_has_calls([
         _error_message((
             "Error: at least one of the target workspaces has a version newer than the one you are "
@@ -246,11 +249,13 @@ def test_patch_working_directories(mocker: MockerFixture) -> None:
         "terraform_manager.entities.terraform.Terraform.set_working_directories", return_value=True
     )
     _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"working_directory": "test"}))
+
+    desired_directory = "test"
+    _mock_arguments(mocker, _arguments({"working_directory": desired_directory}))
 
     main()
 
-    working_directory_mock.assert_called_once()
+    working_directory_mock.assert_called_once_with(desired_directory)
     fail_mock.assert_not_called()
 
 
@@ -261,11 +266,13 @@ def test_patch_working_directories_failure(mocker: MockerFixture) -> None:
         return_value=False
     )
     _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"working_directory": "test"}))
+
+    desired_directory = "test"
+    _mock_arguments(mocker, _arguments({"working_directory": desired_directory}))
 
     main()
 
-    working_directory_mock.assert_called_once()
+    working_directory_mock.assert_called_once_with(desired_directory)
     fail_mock.assert_called_once()
 
 
@@ -279,5 +286,5 @@ def test_clear_working_directories(mocker: MockerFixture) -> None:
 
     main()
 
-    working_directory_mock.assert_called_once()
+    working_directory_mock.assert_called_once_with(None)
     fail_mock.assert_not_called()

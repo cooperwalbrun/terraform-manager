@@ -20,6 +20,7 @@ def exhaust_pages(
     endpoint: str,
     *,
     json_mapper: Callable[[Any], A],
+    token: Optional[str] = None,
     write_error_messages: bool = False
 ) -> List[A]:
     """
@@ -29,13 +30,17 @@ def exhaust_pages(
                      Enterprise).
     :param json_mapper: A mapping function that takes the value of the "data" field as input and
                         returns a new value (which will be aggregated for all pages).
+    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
+                  token will be searched for in the documented locations.
     :param write_error_messages: Whether to write error messages to STDERR.
     :return: A list of outputs from the json_mapper function.
     """
 
     current_page = 1
     aggregate = []
-    headers = get_api_headers(parse_domain(endpoint), write_error_messages=write_error_messages)
+    headers = get_api_headers(
+        parse_domain(endpoint), token=token, write_error_messages=write_error_messages
+    )
     while current_page is not None:
         parameters = {
             # See: https://www.terraform.io/docs/cloud/api/index.html#pagination

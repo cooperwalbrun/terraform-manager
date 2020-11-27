@@ -1,6 +1,6 @@
 import os
 import textwrap
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 
 from requests import Response
 from tabulate import tabulate
@@ -54,6 +54,7 @@ def patch_versions(
     *,
     new_version: str,
     no_tls: bool = False,
+    token: Optional[str] = None,
     write_output: bool = False
 ) -> bool:
     """
@@ -65,6 +66,8 @@ def patch_versions(
     :param workspaces: The workspaces to patch.
     :param new_version: The new Terraform version to assign to the workspaces.
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
+    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
+                  token will be searched for in the documented locations.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
     :return: Whether all patch operations were successful. If even a single one failed, returns
              False.
@@ -95,6 +98,7 @@ def patch_versions(
         on_success=on_success,
         on_failure=on_failure,
         no_tls=no_tls,
+        token=token,
         write_output=write_output
     )
 

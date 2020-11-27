@@ -144,6 +144,7 @@ def main() -> None:
             workspace_names=workspaces_to_target,
             blacklist=blacklist,
             no_tls=no_tls,
+            token=None,
             write_output=True
         )
         if len(terraform.workspaces) == 0:

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import requests
 from tabulate import tabulate
@@ -15,6 +15,7 @@ def lock_or_unlock_workspaces(
     *,
     set_lock: bool,
     no_tls: bool = False,
+    token: Optional[str] = None,
     write_output: bool = False
 ) -> bool:
     """
@@ -27,12 +28,14 @@ def lock_or_unlock_workspaces(
     :param set_lock: The desired state of the workspaces' locks. If True, workspaces will be locked.
                      If False, workspaces will be unlocked.
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
+    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
+                  token will be searched for in the documented locations.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
     :return: Whether all lock/unlock operations were successful. If even a single one failed,
              returns False.
     """
 
-    headers = get_api_headers(terraform_domain, write_error_messages=write_output)
+    headers = get_api_headers(terraform_domain, token=token, write_error_messages=write_output)
     operation = "lock" if set_lock else "unlock"
     base_url = f"{get_protocol(no_tls)}://{terraform_domain}/api/v2"
     report = []

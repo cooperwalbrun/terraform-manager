@@ -137,6 +137,12 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# IntelliJ IDEA
+# JetBrains (IntelliJ IDEA, PyCharm, etc)
 .idea/
+.idea_modules/
+/out/
 *.iml
+*.iws
+
+# Visual Studio Code
+.vscode/

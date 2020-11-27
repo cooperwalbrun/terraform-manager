@@ -17,6 +17,7 @@ class Terraform:
         workspace_names: Optional[List[str]] = None,
         blacklist: bool = False,
         no_tls: bool = False,
+        token: Optional[str] = None,
         write_output: bool = False
     ):
         self.terraform_domain = terraform_domain
@@ -24,17 +25,42 @@ class Terraform:
         self.workspace_names = workspace_names
         self.blacklist = blacklist
         self.no_tls = no_tls
+        self.token = token
         self.write_output = write_output
+
+        self._options_hash: int = self._compute_options_hash()
         self._workspace_cache: Optional[List[Workspace]] = None
+
+    def _compute_options_hash(self) -> int:
+        # We only compute the hash of options that influence which workspaces are returned by the
+        # workspace fetch
+        value = hash(self.terraform_domain) + hash(self.organization) + hash(self.blacklist) + \
+                hash(self.no_tls)
+        if self.workspace_names is not None:
+            value += hash(tuple(self.workspace_names))
+        if self.token is not None:
+            value += hash(self.token)
+        return value
 
     @property
     def workspaces(self) -> List[Workspace]:
-        if self._workspace_cache is None:
+        """
+        Fetch all workspaces (or a subset if desired) from a particular Terraform organization. The
+        workspaces will be fetched on a as-needed basis; they will be cached so this property
+        computes in constant-time on subsequent accesses. If configuration options are updated on
+        this Terraform class instance, the workspaces will be re-fetched the next time this property
+        is accessed.
+
+        :return: The fetched workspaces, if any.
+        """
+        if self._workspace_cache is None or self._options_hash != self._compute_options_hash():
+            self._options_hash = self._compute_options_hash()
             self._workspace_cache = fetch_all(
                 self.terraform_domain,
                 self.organization,
                 workspace_names=self.workspace_names,
                 blacklist=self.blacklist,
+                token=self.token,
                 write_error_messages=self.write_output
             )
         return self._workspace_cache
@@ -52,6 +78,7 @@ class Terraform:
             self.workspaces,
             set_lock=True,
             no_tls=self.no_tls,
+            token=self.token,
             write_output=self.write_output
         )
 
@@ -68,6 +95,7 @@ class Terraform:
             self.workspaces,
             set_lock=False,
             no_tls=self.no_tls,
+            token=self.token,
             write_output=self.write_output
         )
 
@@ -97,6 +125,7 @@ class Terraform:
             self.workspaces,
             new_version=new_version,
             no_tls=self.no_tls,
+            token=self.token,
             write_output=self.write_output
         )
 
@@ -134,13 +163,14 @@ class Terraform:
     def __repr__(self):
         return (
             "Terraform(domain={}, organization={}, workspaces=List[{}], blacklist={}, "
-            "no_tls={}, write_output={})"
+            "no_tls={}, token={}, write_output={})"
         ).format(
             self.terraform_domain,
             self.organization,
             len(self.workspaces),
             self.blacklist,
             self.no_tls,
+            "<REDACTED>" if self.token is not None else "None",
             self.write_output
         )
 

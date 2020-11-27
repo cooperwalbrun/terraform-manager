@@ -38,6 +38,7 @@ def fetch_all(
     workspace_names: Optional[List[str]] = None,
     blacklist: bool = False,
     no_tls: bool = False,
+    token: Optional[str] = None,
     write_error_messages: bool = False
 ) -> List[Workspace]:
     """
@@ -50,6 +51,8 @@ def fetch_all(
                        specified, all workspace data will be fetched.
     :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
+    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
+                  token will be searched for in the documented locations.
     :param write_error_messages: Whether to write error messages to STDERR.
     :return: The workspace objects corresponding to the given criteria.
     """
@@ -70,6 +73,7 @@ def fetch_all(
             pagination.exhaust_pages(
                 f"{base_url}/organizations/{organization}/workspaces",
                 json_mapper=_map_workspaces,
+                token=token,
                 write_error_messages=write_error_messages
             )
         ) if workspace_names is None or is_returnable(workspace)
@@ -84,6 +88,7 @@ def batch_operation(
     on_success: Callable[[Workspace], None],
     on_failure: Callable[[Workspace, Union[Response, ErrorResponse]], None],
     no_tls: bool = False,
+    token: Optional[str] = None,
     write_output: bool = False
 ) -> bool:
     """
@@ -99,12 +104,14 @@ def batch_operation(
     :param on_failure: A function which will be passed a workspace object when that workspace has
                        not been successfully patched.
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
+    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
+                  token will be searched for in the documented locations.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
     :return: Whether all patch operations were successful. If even a single one failed, returns
              False.
     """
 
-    headers = get_api_headers(terraform_domain, write_error_messages=write_output)
+    headers = get_api_headers(terraform_domain, token=token, write_error_messages=write_output)
     all_successful = True
     base_url = f"{get_protocol(no_tls)}://{terraform_domain}/api/v2"
     for workspace in workspaces:
