@@ -5,6 +5,9 @@
 3. [Updating Dependencies](#updating-dependencies)
 4. [Unit Testing](#unit-testing)
 5. [Formatting Code](#formatting-code)
+    1. [YAPF](#yapf)
+    2. [Type Annotations](#type-annotations)
+    3. [Imports](#imports)
 6. [Changelog](#changelog)
 
 ## Development Workspace Setup
@@ -79,6 +82,8 @@ tox                  # Run unit tests using tox (requires that you have the nece
 
 ## Formatting Code
 
+### YAPF
+
 This project uses [yapf](https://github.com/google/yapf) to handle formatting, and contributions to
 its code are expected to be formatted with YAPF (within reason) using the settings in
 [.style.yapf](.style.yapf).
@@ -88,12 +93,19 @@ comments `# yapf: disable` and `# yapf: enable`. Whenever the former appears, th
 afterwards (this project will not tolerate disabling YAPF for large code blocks and/or entire
 files). Disabling YAPF should be done sparingly.
 
+### Type Annotations
+
 In addition to YAPF formatting, code should be appropriately accompanied by type annotations. This
 includes:
 * Variables and constants in global scope (regardless of whether the variable name is prefixed with
   an underscore)
 * All method parameters and method return values
 * Any declaration that may have a non-obvious, ambiguous, or otherwise complex type signature
+
+### Imports
+
+Imports should be sorted. Most IDEs support this functionality via keybindings or even on-save
+functionality.
 
 ## Changelog
 

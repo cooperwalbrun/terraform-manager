@@ -3,8 +3,7 @@ from pytest_mock import MockerFixture
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.workspaces import fetch_all
 
-from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN, \
-    establish_credential_mocks
+from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN
 
 _test_organization: str = "test"
 _test_api_url: str = f"{TEST_API_URL}/organizations/{_test_organization}/workspaces"
@@ -37,9 +36,13 @@ _test_json = {
 # yapf: enable
 
 
+def _establish_mocks(mocker: MockerFixture) -> None:
+    mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
+
+
 @responses.activate
 def test_fetch_all_workspaces(mocker: MockerFixture) -> None:
-    establish_credential_mocks(mocker)
+    _establish_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -53,7 +56,7 @@ def test_fetch_all_workspaces(mocker: MockerFixture) -> None:
 
 @responses.activate
 def test_fetch_all_workspaces_with_filter(mocker: MockerFixture) -> None:
-    establish_credential_mocks(mocker)
+    _establish_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -71,7 +74,7 @@ def test_fetch_all_workspaces_with_filter(mocker: MockerFixture) -> None:
 
 @responses.activate
 def test_fetch_all_workspaces_with_wildcard_filter(mocker: MockerFixture) -> None:
-    establish_credential_mocks(mocker)
+    _establish_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -86,7 +89,7 @@ def test_fetch_all_workspaces_with_wildcard_filter(mocker: MockerFixture) -> Non
 
 @responses.activate
 def test_fetch_all_workspaces_with_inverted_filter(mocker: MockerFixture) -> None:
-    establish_credential_mocks(mocker)
+    _establish_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -104,7 +107,7 @@ def test_fetch_all_workspaces_with_inverted_filter(mocker: MockerFixture) -> Non
 
 @responses.activate
 def test_fetch_all_workspaces_with_inverted_wildcard_filter(mocker: MockerFixture) -> None:
-    establish_credential_mocks(mocker)
+    _establish_mocks(mocker)
     responses.add(
         responses.GET,
         f"{_test_api_url}?page[size]=100&page[number]=1",
@@ -119,7 +122,7 @@ def test_fetch_all_workspaces_with_inverted_wildcard_filter(mocker: MockerFixtur
 
 @responses.activate
 def test_fetch_all_workspaces_bad_json_response(mocker: MockerFixture) -> None:
-    establish_credential_mocks(mocker)
+    _establish_mocks(mocker)
     json = {"data": {"bad json": "test"}}
     responses.add(
         responses.GET,

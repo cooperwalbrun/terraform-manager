@@ -6,16 +6,20 @@ from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.working_directories import patch_working_directories
 
-from tests.utilities.tooling import establish_credential_mocks, TEST_API_URL, test_workspace, \
-    TEST_ORGANIZATION, TEST_TERRAFORM_DOMAIN
+from tests.utilities.tooling import TEST_API_URL, test_workspace, TEST_ORGANIZATION, \
+    TEST_TERRAFORM_DOMAIN
 
 _test_workspace1: Workspace = test_workspace(working_directory="")
 _test_workspace2: Workspace = test_workspace(working_directory="stage")
 
 
+def _establish_mocks(mocker: MockerFixture) -> None:
+    mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
+
+
 @responses.activate
 def test_patch_versions(mocker: MockerFixture) -> None:
-    establish_credential_mocks(mocker)
+    _establish_mocks(mocker)
     print_mock: MagicMock = mocker.patch("builtins.print")
     test_working_directory = "test"
     error_json = {"data": {"id": _test_workspace2.workspace_id}}

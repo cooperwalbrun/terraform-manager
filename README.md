@@ -30,6 +30,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Designed to either be usable as a CLI tool or called directly from Python code:
     * System exits are centralized at the CLI entrypoint
     * All console output is suppressed by default (opt-in)
+* Flexible credential configuration (multiple ways to specify your Terraform token)
 * Powerful functionality for selecting an organization's workspaces to target with operations:
     * Select workspaces in either whitelist or blacklist style
     * Select workspaces using [Unix-like filename pattern matching](https://docs.python.org/3/library/fnmatch.html)
@@ -55,13 +56,13 @@ pip install terraform-manager
 ## Configuration
 
 All that needs to be configured in order to use this module is a token or credentials file for
-interacting with the Terraform API. There are several ways to do this; the primary methods are
-described below.
+interacting with the Terraform API. There are several ways to do this and they are described below.
 
 The order of precedence for these approaches is as follows:
 1. Environment Variable Storing the Token
 2. Terraform CLI Configuration
 3. Environment Variable Storing the Credentials File Location
+4. (Python only) Pass a token to the constructor of the `Terraform` class (see Usage below)
 
 For options 2 and 3, there is corresponding
 [documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).
@@ -99,7 +100,7 @@ terraform-manager example123 <operation>
 # Select all workspaces in example123 at a custom domain
 terraform-manager example123 --domain something.mycompany.com <operation>
 
-# Select all workspaces in example123 at a custom domain with HTTP instead of HTTPS
+# Select all workspaces in example123 at a custom domain (all API interactions will use HTTP instead of HTTPS)
 terraform-manager example123 --domain something.mycompany.com --no-tls <operation>
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
@@ -138,8 +139,6 @@ terraform-manager example123 --clear-working-dir
 
 ## Usage (Python)
 
-All ensuing examples use a Terraform organization name of `example123`.
-
 ### Selecting Workspaces (Python)
 
 ```python
@@ -148,10 +147,13 @@ from terraform_manager.entities.terraform import Terraform
 # Select all workspaces in example123
 terraform = Terraform("app.terraform.io", "example123")
 
+# Select all workspaces in example123 using a specified token
+terraform = Terraform("app.terraform.io", "example123", token="YOUR TOKEN")
+
 # Select all workspaces in example123 at a custom domain
 terraform = Terraform("something.mycompany.com", "example123")
 
-# Select all workspaces in example123 at a custom domain with HTTP instead of HTTPS
+# Select all workspaces in example123 at a custom domain (all API interactions will use HTTP instead of HTTPS)
 terraform = Terraform("something.mycompany.com", "example123", no_tls=True)
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
@@ -173,13 +175,14 @@ workspaces = terraform.workspaces
 
 ### Operations (Python)
 
->Note: these operations are safe and do not need to be wrapped in a `try`-`except`.
+>Note: these operations are safe and do not need to be wrapped in a `try`-`except`. They will return
+>a boolean value indicating whether all workspace operations succeeded.
 
 ```python
 from terraform_manager.entities.terraform import Terraform
 
 # Have a list of workspaces fetched using e.g. one of the methods shown above
-terraform = Terraform("app.terraform.io", "example123")
+terraform = Terraform(...)
 
 # Upgrade workspace versions to 0.13.5
 success = terraform.patch_versions("0.13.5")

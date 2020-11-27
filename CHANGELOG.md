@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added an optional new `--no-tls` flag to enable Terraform API interactions via HTTP instead of HTTPS (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Added an optional `--no-tls` flag to enable Terraform API interactions via HTTP instead of HTTPS (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Added an optional `token` keyword argument to the `Terraform` class's constructor (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ### Changed
 
@@ -25,12 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Unit tests (95% code coverage) for `__main__.py` to test CLI interactions (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Added unit tests (95% code coverage) for `__main__.py` to test CLI interactions (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ### Changed
 
 * Python interactions with the module are now centered around the new `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
-* `README.md` Python usage examples now use the new `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 * CLI functionality now uses the new `Terraform` class under the hood (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 * The print width of the version summary's "Workspaces" column was increased from 70 to 80 characters (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* There are now badges in the `README.md` for PyPI version and code coverage (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Added two badges in the `README.md` for PyPI version and code coverage (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ### Changed
 
