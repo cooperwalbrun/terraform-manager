@@ -142,19 +142,20 @@ terraform-manager -o example123 --clear-working-dir
 
 The variable configuration operation is a bit different than the ones above; the input to it is a
 JSON file containing the variables you wish to define. The contents of this file should consist only
-of a JSON array containing one or more JSON objects. To generate an exemplary `template.json` file,
+of a JSON array containing one or more JSON objects. To generate an example `template.json` file,
 you may issue the following:
 
 ```bash
 terraform-manager --create-vars-template
 ```
 
-Note the absence of workspace selection arguments such as organization This is a special operation
-that takes no other arguments. After you configure a JSON file (with a location and name of your
-choosing), you may pass it to the `--configure-vars` argument like so:
+Note the absence of workspace selection arguments such as organization. This is a special operation
+that takes no other arguments, and it does not interact with the Terraform API at all. After you
+configure a JSON file (with a location and name of your choosing), you may pass it to the
+`--configure-vars` argument like so:
 
 ```bash
-terraform-manager -o example123 --configure-vars my-vars-file.json
+terraform-manager -o example123 --configure-vars /some/path/my-vars-file.json
 ```
 
 This will create all the variables defined in `my-vars-file.json` in every selected workspace, and
@@ -162,6 +163,8 @@ if any given variable already exists in a workspace (comparison is done by varia
 will be updated in-place to align with your specified configuration.
 
 ## Usage (Python)
+
+All ensuing examples use a Terraform organization name of `example123`.
 
 ### Selecting Workspaces (Python)
 
@@ -225,9 +228,15 @@ success = terraform.set_working_directories("dev")
 success = terraform.set_working_directories(None)
 
 # Configure variables (first create a list of one or more variable objects, then configure them)
-variables = [Variable(key="some-key", value="not-secret"), Variable(key="other-key", value="secret", sensitive=True)]
+variables = [
+    Variable(key="some-key", value="not-secret"),
+    Variable(key="other-key", value="secret", sensitive=True)
+]
 success = terraform.configure_variables(variables)
 ```
+
+Bear in mind that variables are compared to each other by key only when `terraform-manager`
+determines whether to create versus update (in-place) the variable in a given workspace.
 
 ## Contributing
 
