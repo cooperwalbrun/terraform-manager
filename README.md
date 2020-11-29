@@ -39,6 +39,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Bulk lock or unlock selected workspaces
     * Bulk update the Terraform version of selected workspaces
     * Bulk update the working directory of selected workspaces
+    * Bulk update/create variables of selected workspaces (with idempotency)
 
 ## Installation
 
@@ -56,16 +57,17 @@ pip install terraform-manager
 ## Configuration
 
 All that needs to be configured in order to use this module is a token or credentials file for
-interacting with the Terraform API. There are several ways to do this and they are described below.
+interacting with the Terraform API. There are several ways to do this described below.
 
 The order of precedence for these approaches is as follows:
-1. Environment Variable Storing the Token
-2. Terraform CLI Configuration
-3. Environment Variable Storing the Credentials File Location
-4. (Python only) Pass a token to the constructor of the `Terraform` class (see
-   [Usage (Python)](#usage-python) below)
 
-For options 2 and 3, there is corresponding
+1. (Python only) Pass a token to the constructor of the `Terraform` class (see
+   [Usage (Python)](#usage-python) below)
+2. Environment Variable Storing the Token
+3. Terraform CLI Configuration
+4. Environment Variable Storing the Credentials File Location
+
+For options 3 and 4, there is corresponding
 [documentation from HashiCorp](https://www.terraform.io/docs/commands/cli-config.html).
 
 ### Terraform CLI Configuration
@@ -96,22 +98,22 @@ All ensuing examples use a Terraform organization name of `example123`.
 
 ```bash
 # Select all workspaces in example123
-terraform-manager example123 <operation>
+terraform-manager -o example123 <operation>
 
 # Select all workspaces in example123 at a custom domain
-terraform-manager example123 --domain something.mycompany.com <operation>
+terraform-manager -o example123 --domain something.mycompany.com <operation>
 
 # Select all workspaces in example123 at a custom domain (all API interactions will use HTTP instead of HTTPS)
-terraform-manager example123 --domain something.mycompany.com --no-tls <operation>
+terraform-manager -o example123 --domain something.mycompany.com --no-tls <operation>
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
-terraform-manager example123 <operation> -w workspace1 workspace3
+terraform-manager -o example123 -w workspace1 workspace3 <operation>
 
 # Select workspaces that begin with "aws" (case-insensitive)
-terraform-manager example123 <operation> -w aws*
+terraform-manager -o example123 -w aws* <operation>
 
 # Select workspaces that do NOT begin with "aws" (case-insensitive)
-terraform-manager example123 <operation> -w aws* -b
+terraform-manager -o example123 -w aws* -b <operation>
 ```
 
 ### Operations (CLI)
@@ -120,25 +122,49 @@ terraform-manager example123 <operation> -w aws* -b
 
 ```bash
 # Print a version summary to STDOUT
-terraform-manager example123 --version-summary
+terraform-manager -o example123 --version-summary
 
 # Upgrade workspace versions to 0.13.5 and write a report to STDOUT
-terraform-manager example123 --patch-versions 0.13.5
+terraform-manager -o example123 --patch-versions 0.13.5
 
 # Lock workspaces and write a report to STDOUT
-terraform-manager example123 --lock
+terraform-manager -o example123 --lock
 
 # Unlock workspaces and write a report to STDOUT
-terraform-manager example123 --unlock
+terraform-manager -o example123 --unlock
 
 # Set working directories to "dev" and write a report to STDOUT
-terraform-manager example123 --working-dir dev
+terraform-manager -o example123 --working-dir dev
 
 # Set working directories to empty and write a report to STDOUT
-terraform-manager example123 --clear-working-dir
+terraform-manager -o example123 --clear-working-dir
 ```
 
+The variable configuration operation is a bit different than the ones above; the input to it is a
+JSON file containing the variables you wish to define. The contents of this file should consist only
+of a JSON array containing one or more JSON objects. To generate an example `template.json` file,
+you may issue the following:
+
+```bash
+terraform-manager --create-vars-template
+```
+
+Note the absence of workspace selection arguments such as organization. This is a special operation
+that takes no other arguments, and it does not interact with the Terraform API at all. After you
+configure a JSON file (with a location and name of your choosing), you may pass it to the
+`--configure-vars` argument like so:
+
+```bash
+terraform-manager -o example123 --configure-vars /some/path/my-vars-file.json
+```
+
+This will create all the variables defined in `my-vars-file.json` in every selected workspace, and
+if any given variable already exists in a workspace (comparison is done by variable key only), it
+will be updated in-place to align with your specified configuration.
+
 ## Usage (Python)
+
+All ensuing examples use a Terraform organization name of `example123`.
 
 ### Selecting Workspaces (Python)
 
@@ -148,7 +174,7 @@ from terraform_manager.entities.terraform import Terraform
 # Select all workspaces in example123
 terraform = Terraform("app.terraform.io", "example123")
 
-# Select all workspaces in example123 using a specified token
+# Select all workspaces in example123 using a given token (instead of terraform-manager finding a token on its own)
 terraform = Terraform("app.terraform.io", "example123", token="YOUR TOKEN")
 
 # Select all workspaces in example123 at a custom domain
@@ -181,6 +207,7 @@ workspaces = terraform.workspaces
 
 ```python
 from terraform_manager.entities.terraform import Terraform
+from terraform_manager.entities.variable import Variable
 
 # Have a list of workspaces fetched using e.g. one of the methods shown above
 terraform = Terraform(...)
@@ -199,7 +226,17 @@ success = terraform.set_working_directories("dev")
 
 # Set working directories to empty
 success = terraform.set_working_directories(None)
+
+# Configure variables (first create a list of one or more variable objects, then configure them)
+variables = [
+    Variable(key="some-key", value="not-secret"),
+    Variable(key="other-key", value="secret", sensitive=True)
+]
+success = terraform.configure_variables(variables)
 ```
+
+Bear in mind that variables are compared to each other by key only when `terraform-manager`
+determines whether to create versus update (in-place) the variable in a given workspace.
 
 ## Contributing
 

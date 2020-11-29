@@ -123,12 +123,12 @@ def test_fetch_all_workspaces_with_inverted_wildcard_filter(mocker: MockerFixtur
 @responses.activate
 def test_fetch_all_workspaces_bad_json_response(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
-    json = {"data": {"bad json": "test"}}
-    responses.add(
-        responses.GET,
-        f"{_test_api_url}?page[size]=100&page[number]=1",
-        match_querystring=True,
-        json=json,
-        status=200
-    )
-    assert fetch_all(TEST_TERRAFORM_DOMAIN, _test_organization) == []
+    for test in [{}, {"data": {"bad json": "test"}}]:
+        responses.add(
+            responses.GET,
+            f"{_test_api_url}?page[size]=100&page[number]=1",
+            match_querystring=True,
+            json=test,
+            status=200
+        )
+        assert fetch_all(TEST_TERRAFORM_DOMAIN, _test_organization) == []

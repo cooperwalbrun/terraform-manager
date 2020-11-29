@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 
 from pytest_mock import MockerFixture
 from terraform_manager.__main__ import main
+from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
 
 from tests.utilities.tooling import test_workspace, TEST_ORGANIZATION
@@ -11,20 +12,25 @@ from tests.utilities.tooling import test_workspace, TEST_ORGANIZATION
 _test_workspace1: Workspace = test_workspace()
 _test_workspace2: Workspace = test_workspace()
 
-
-def _arguments(merge_with: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+_bool_flags: Dict[str, bool] = {
     # Below, we mimic the argparse functionality for boolean flags by specifying a default value for
     # them
-    arguments = {
-        "organization": TEST_ORGANIZATION,
-        "no_tls": False,
-        "blacklist": False,
-        "version_summary": False,
-        "lock_workspaces": False,
-        "unlock_workspaces": False,
-        "clear_working_directory": False
-    }
-    return {**arguments, **merge_with} if merge_with is not None else arguments
+    "no_tls": False,
+    "blacklist": False,
+    "version_summary": False,
+    "lock_workspaces": False,
+    "unlock_workspaces": False,
+    "clear_working_directory": False,
+    "create_variables_template": False
+}
+
+
+def _arguments(merge_with: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    arguments = {"organization": TEST_ORGANIZATION}
+    if merge_with is None:
+        return {**arguments, **_bool_flags}
+    else:
+        return {**arguments, **_bool_flags, **merge_with}
 
 
 def _mock_fetch_workspaces(mocker: MockerFixture, return_value: List[Workspace]) -> MagicMock:
@@ -39,6 +45,13 @@ def _mock_arguments(mocker: MockerFixture, arguments: Dict[str, Any]) -> MagicMo
 
 def _error_message(text: str) -> call:
     return call(text, file=sys.stderr)
+
+
+def test_no_arguments(mocker: MockerFixture) -> None:
+    mocker.patch("terraform_manager.__main__.parse_arguments", return_value=_bool_flags)
+    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+    main()
+    fail_mock.assert_called_once()
 
 
 def test_no_tls_against_terraform_cloud(mocker: MockerFixture) -> None:
@@ -123,41 +136,26 @@ def test_version_summary(mocker: MockerFixture) -> None:
 
 
 def test_patch_versions(mocker: MockerFixture) -> None:
-    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
-    check_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.check_versions", return_value=True
-    )
-    patch_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.patch_versions", return_value=True
-    )
-    desired_version = "0.13.5"
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"patch_versions": desired_version}))
+    for success in [True, False]:
+        fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+        check_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.check_versions", return_value=True
+        )
+        patch_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.patch_versions", return_value=success
+        )
+        desired_version = "0.13.5"
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+        _mock_arguments(mocker, _arguments({"patch_versions": desired_version}))
 
-    main()
+        main()
 
-    check_mock.assert_called_once_with(desired_version)
-    patch_mock.assert_called_once_with(desired_version)
-    fail_mock.assert_not_called()
-
-
-def test_patch_versions_failure(mocker: MockerFixture) -> None:
-    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
-    check_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.check_versions", return_value=True
-    )
-    patch_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.patch_versions", return_value=False
-    )
-    desired_version = "0.13.5"
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"patch_versions": desired_version}))
-
-    main()
-
-    check_mock.assert_called_once_with(desired_version)
-    patch_mock.assert_called_once_with(desired_version)
-    fail_mock.assert_called_once()
+        check_mock.assert_called_once_with(desired_version)
+        patch_mock.assert_called_once_with(desired_version)
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()
 
 
 def test_patch_versions_invalid_version(mocker: MockerFixture) -> None:
@@ -202,78 +200,61 @@ def test_patch_versions_downgrade_version(mocker: MockerFixture) -> None:
 
 
 def test_lock_workspaces(mocker: MockerFixture) -> None:
-    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
-    lock_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.lock_workspaces", return_value=True
-    )
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"lock_workspaces": True}))
+    for success in [True, False]:
+        fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+        lock_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.lock_workspaces", return_value=success
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+        _mock_arguments(mocker, _arguments({"lock_workspaces": True}))
 
-    main()
+        main()
 
-    lock_mock.assert_called_once()
-    fail_mock.assert_not_called()
-
-
-def test_lock_workspaces_failure(mocker: MockerFixture) -> None:
-    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
-    lock_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.lock_workspaces", return_value=False
-    )
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"lock_workspaces": True}))
-
-    main()
-
-    lock_mock.assert_called_once()
-    fail_mock.assert_called_once()
+        lock_mock.assert_called_once()
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()
 
 
 def test_unlock_workspaces(mocker: MockerFixture) -> None:
-    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
-    unlock_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.unlock_workspaces", return_value=True
-    )
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_arguments(mocker, _arguments({"unlock_workspaces": True}))
+    for success in [True, False]:
+        fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+        unlock_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.unlock_workspaces",
+            return_value=success
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+        _mock_arguments(mocker, _arguments({"unlock_workspaces": True}))
 
-    main()
+        main()
 
-    unlock_mock.assert_called_once()
-    fail_mock.assert_not_called()
+        unlock_mock.assert_called_once()
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()
 
 
 def test_patch_working_directories(mocker: MockerFixture) -> None:
-    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
-    working_directory_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.set_working_directories", return_value=True
-    )
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
+    for success in [True, False]:
+        fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+        working_directory_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.set_working_directories",
+            return_value=success
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
 
-    desired_directory = "test"
-    _mock_arguments(mocker, _arguments({"working_directory": desired_directory}))
+        desired_directory = "test"
+        _mock_arguments(mocker, _arguments({"working_directory": desired_directory}))
 
-    main()
+        main()
 
-    working_directory_mock.assert_called_once_with(desired_directory)
-    fail_mock.assert_not_called()
-
-
-def test_patch_working_directories_failure(mocker: MockerFixture) -> None:
-    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
-    working_directory_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.set_working_directories",
-        return_value=False
-    )
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-
-    desired_directory = "test"
-    _mock_arguments(mocker, _arguments({"working_directory": desired_directory}))
-
-    main()
-
-    working_directory_mock.assert_called_once_with(desired_directory)
-    fail_mock.assert_called_once()
+        working_directory_mock.assert_called_once_with(desired_directory)
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()
 
 
 def test_clear_working_directories(mocker: MockerFixture) -> None:
@@ -288,3 +269,75 @@ def test_clear_working_directories(mocker: MockerFixture) -> None:
 
     working_directory_mock.assert_called_once_with(None)
     fail_mock.assert_not_called()
+
+
+def test_create_variables_template(mocker: MockerFixture) -> None:
+    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+    create_mock: MagicMock = mocker.patch(
+        "terraform_manager.__main__.create_variables_template", return_value=True
+    )
+    _mock_arguments(mocker, _arguments({"create_variables_template": True}))
+
+    main()
+
+    create_mock.assert_called_once_with(write_output=True)
+    fail_mock.assert_not_called()
+
+
+def test_create_variables_template_failure(mocker: MockerFixture) -> None:
+    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+    create_mock: MagicMock = mocker.patch(
+        "terraform_manager.__main__.create_variables_template", return_value=False
+    )
+    _mock_arguments(mocker, _arguments({"create_variables_template": True}))
+
+    main()
+
+    create_mock.assert_called_once_with(write_output=True)
+    fail_mock.assert_called_once()
+
+
+def test_configure_variables(mocker: MockerFixture) -> None:
+    for success in [True, False]:
+        test_variable = Variable(key="key", value="value")
+        fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+        parse_mock: MagicMock = mocker.patch(
+            "terraform_manager.__main__.parse_variables", return_value=[test_variable]
+        )
+        configure_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.configure_variables",
+            return_value=success
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+
+        variables_file = "test.json"
+        _mock_arguments(mocker, _arguments({"configure_variables": variables_file}))
+
+        main()
+
+        parse_mock.assert_called_once_with(variables_file, write_output=True)
+        configure_mock.assert_called_once_with([test_variable])
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()
+
+
+def test_configure_variables_nothing_parsed(mocker: MockerFixture) -> None:
+    fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+    parse_mock: MagicMock = mocker.patch(
+        "terraform_manager.__main__.parse_variables", return_value=[]
+    )
+    configure_mock: MagicMock = mocker.patch(
+        "terraform_manager.entities.terraform.Terraform.configure_variables", return_value=True
+    )
+    _mock_fetch_workspaces(mocker, [_test_workspace1])
+
+    variables_file = "test.json"
+    _mock_arguments(mocker, _arguments({"configure_variables": variables_file}))
+
+    main()
+
+    parse_mock.assert_called_once_with(variables_file, write_output=True)
+    configure_mock.assert_not_called()
+    fail_mock.assert_called_once()

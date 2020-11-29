@@ -1,4 +1,5 @@
-from terraform_manager.utilities.utilities import parse_domain
+from requests import RequestException, Response
+from terraform_manager.utilities.utilities import parse_domain, safe_http_request
 
 
 def test_parse_url() -> None:
@@ -27,3 +28,13 @@ def test_parse_url() -> None:
     # yapf: enable
     for test, expected_result in terraform_enterprise_tests:
         assert parse_domain(test) == expected_result
+
+
+def test_safe_http_request() -> None:
+    message = "Testing dangerous HTTP activity"
+
+    def fail() -> Response:
+        raise RequestException(message)
+
+    response = safe_http_request(fail)
+    assert response.json() == {"terraform-manager": {"error": message, "status": 500}}

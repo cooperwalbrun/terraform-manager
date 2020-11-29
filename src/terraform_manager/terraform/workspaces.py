@@ -6,7 +6,7 @@ import requests
 from requests import Response
 from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform import pagination, get_api_headers
+from terraform_manager.terraform import pagination, get_api_headers, SuccessHandler, ErrorHandler
 from terraform_manager.utilities.throttle import throttle
 from terraform_manager.utilities.utilities import safe_http_request, get_protocol
 
@@ -48,7 +48,7 @@ def fetch_all(
                              Terraform Cloud or Enterprise).
     :param organization: The organization for which to fetch workspace data.
     :param workspace_names: The name(s) of workspace(s) for which data should be fetched. If not
-                       specified, all workspace data will be fetched.
+                            specified, all workspace data will be fetched.
     :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param token: A token suitable for authenticating against the Terraform API. If not specified, a
@@ -85,8 +85,8 @@ def batch_operation(
     workspaces: List[Workspace],
     *,
     json: Dict[str, Any],
-    on_success: Callable[[Workspace], None],
-    on_failure: Callable[[Workspace, Union[Response, ErrorResponse]], None],
+    on_success: SuccessHandler[Workspace],
+    on_failure: ErrorHandler[Workspace],
     no_tls: bool = False,
     token: Optional[str] = None,
     write_output: bool = False
@@ -99,10 +99,10 @@ def batch_operation(
                              Terraform Cloud or Enterprise).
     :param workspaces: The workspaces to patch.
     :param json: The JSON body of the PATCH requests that will be sent to the Terraform API.
-    :param on_success: A function which will be passed a workspace object when that workspace has
+    :param on_success: A function which will be passed a Workspace object when that workspace has
                        been successfully patched.
-    :param on_failure: A function which will be passed a workspace object when that workspace has
-                       not been successfully patched.
+    :param on_failure: A function which will be passed a Workspace object when that workspace has
+                       NOT been successfully patched.
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param token: A token suitable for authenticating against the Terraform API. If not specified, a
                   token will be searched for in the documented locations.

@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any
 import semver
 from terraform_manager.entities.terraform import Terraform
 from terraform_manager.terraform import LATEST_VERSION
+from terraform_manager.terraform.variables import create_variables_template, parse_variables
 
 _parser: ArgumentParser = ArgumentParser(
     description="Manages Terraform workspaces in batch fashion."
@@ -12,8 +13,11 @@ _parser: ArgumentParser = ArgumentParser(
 operation_group = _parser.add_mutually_exclusive_group(required=True)
 
 _parser.add_argument(
-    "organization",
+    "-o",
+    "--organization",
     type=str,
+    metavar="<organization>",
+    dest="organization",
     help="The name of the organization to target within your Terraform installation (see --domain)."
 )
 _parser.add_argument(
@@ -102,6 +106,25 @@ operation_group.add_argument(
     dest="clear_working_directory",
     help="Clears the workspaces' working directories."
 )
+operation_group.add_argument(
+    "--create-vars-template",
+    action="store_true",
+    dest="create_variables_template",
+    help=(
+        "Creates a template JSON file suitable for configuring variables via the --configure-vars "
+        "flag in the current directory."
+    )
+)
+operation_group.add_argument(
+    "--configure-vars",
+    type=str,
+    metavar="<variables file>",
+    dest="configure_variables",
+    help=(
+        "Creates/updates the variables specified in the given file in the workspaces. See "
+        "--create-vars-template."
+    )
+)
 
 
 def parse_arguments(arguments: List[str]) -> Dict[str, Any]:
@@ -113,9 +136,16 @@ def fail() -> None:
     sys.exit(1)
 
 
-def main() -> None:
-    argument_dictionary = parse_arguments(sys.argv[1:])
+def no_required_arguments_main(argument_dictionary: Dict[str, Any]) -> None:
+    if argument_dictionary["create_variables_template"]:
+        success = create_variables_template(write_output=True)
+        if not success:
+            # There is no need to write any error messages because they will be written by the
+            # create_variables_template method
+            fail()
 
+
+def organization_required_main(argument_dictionary: Dict[str, Any]) -> None:
     organization: str = argument_dictionary["organization"]
     raw_domain: Optional[str] = argument_dictionary.get("domain")
     domain: str = "app.terraform.io" if raw_domain is None else raw_domain.lower()
@@ -144,7 +174,7 @@ def main() -> None:
             workspace_names=workspaces_to_target,
             blacklist=blacklist,
             no_tls=no_tls,
-            token=None,
+            token=None,  # We disallow specifying a token inline at the CLI for security reasons
             write_output=True
         )
         if len(terraform.workspaces) == 0:
@@ -190,8 +220,8 @@ def main() -> None:
             else:
                 total_success = terraform.unlock_workspaces()
             if not total_success:
-                # There is no need to write any error messages because a report is written by
-                # the lock_or_unlock_workspaces method
+                # There is no need to write any error messages because a report is written by the
+                # lock_or_unlock_workspaces method
                 fail()
         elif argument_dictionary.get("working_directory") is not None or \
                 argument_dictionary["clear_working_directory"]:
@@ -199,9 +229,34 @@ def main() -> None:
                 argument_dictionary.get("working_directory")
             )
             if not total_success:
-                # There is no need to write any error messages because a report is written by
-                # the patch_working_directories method
+                # There is no need to write any error messages because a report is written by the
+                # patch_working_directories method
                 fail()
+        elif argument_dictionary.get("configure_variables") is not None:
+            file = argument_dictionary["configure_variables"]
+            variables = parse_variables(file, write_output=True)
+            if len(variables) == 0:
+                print(f"Error: no variable definitions found in {file}.", file=sys.stderr)
+                fail()
+            else:
+                total_success = terraform.configure_variables(variables)
+                if not total_success:
+                    # There is no need to write any error messages because a report is written by
+                    # the configure_variables method
+                    fail()
+        # We do not have to have an "else" because argparse should make fallthrough impossible
+
+
+def main() -> None:
+    argument_dictionary = parse_arguments(sys.argv[1:])
+
+    if argument_dictionary["create_variables_template"]:
+        no_required_arguments_main(argument_dictionary)
+    elif "organization" not in argument_dictionary:
+        print("Error: you must specify an organization to target.", file=sys.stderr)
+        fail()
+    else:
+        organization_required_main(argument_dictionary)
 
 
 if __name__ == "__main__":

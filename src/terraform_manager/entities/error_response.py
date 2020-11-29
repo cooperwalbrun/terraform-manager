@@ -1,5 +1,5 @@
 import json
-from typing import Dict
+from typing import Dict, Any
 
 
 class ErrorResponse:  # pragma: no cover
@@ -11,7 +11,7 @@ class ErrorResponse:  # pragma: no cover
         self.error_message = error_message
         self.status_code = 500
 
-    def json(self) -> Dict[str, Dict[str, str]]:
+    def json(self) -> Dict[str, Any]:
         return {"terraform-manager": {"error": self.error_message, "status": self.status_code}}
 
     def __repr__(self):

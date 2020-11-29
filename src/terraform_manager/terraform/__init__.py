@@ -1,9 +1,15 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, TypeVar, Callable, Union
 
+from requests import Response
+from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.terraform.credentials import find_token
 
 LATEST_VERSION: str = "latest"  # The string Terraform uses when a workspace is set to auto-update
 HTTP_CONTENT_TYPE: str = "application/vnd.api+json"
+
+A = TypeVar("A")
+SuccessHandler = Callable[[A], None]
+ErrorHandler = Callable[[A, Union[Response, ErrorResponse]], None]
 
 
 def get_api_headers(
