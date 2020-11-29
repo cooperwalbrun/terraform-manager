@@ -91,7 +91,9 @@ def _get_existing_variables(
     write_output: bool = False
 ) -> Optional[Dict[str, Variable]]:
     """
-    Fetches the variables for a given workspaces.
+    Fetches the variables for a given workspaces. This method will eagerly exit and return None if
+    anything unexpected is encountered. This is done prophylactically as the ensuing update/create
+    operations hinge on the successful completion of this method.
 
     :param base_url: A URL fragment onto which a path will be appended to construct the Terraform
                      API endpoint.
@@ -114,12 +116,14 @@ def _get_existing_variables(
             headers=headers
         ))
     )
-    variables = {}
     # yapf: enable
+
+    variables = {}
     if response.status_code == 200:
-        if "data" in response.json():
-            for obj in response.json()["data"]:
-                if "id" in obj and "attributes" in obj:
+        body = response.json()
+        if "data" in body and isinstance(body["data"], list):
+            for obj in body["data"]:
+                if isinstance(obj, dict) and "id" in obj and "attributes" in obj:
                     variable_id = obj["id"]
                     variable = Variable.from_json(obj["attributes"])
                     if variable is not None:
@@ -130,6 +134,9 @@ def _get_existing_variables(
                 else:
                     write_parse_error(obj)
                     return None
+        else:
+            write_parse_error(response.json())
+            return None
     else:
         if write_output:
             print(
@@ -250,7 +257,7 @@ def configure_variables(
                              Terraform Cloud or Enterprise).
     :param organization: The organization containing the workspaces to patch.
     :param workspaces: The workspaces to patch.
-    :param variables: The variables to either create or update.
+    :param variables: The variables to either create or update (or a mix thereof).
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param token: A token suitable for authenticating against the Terraform API. If not specified, a
                   token will be searched for in the documented locations.
@@ -258,6 +265,12 @@ def configure_variables(
     :return: Whether all HTTP operations were successful. If even a single one failed, returns
              False.
     """
+
+    if len(variables) == 0:
+        if write_output:
+            print("No variables to configure - returning successful immediately.")
+        return True
+
     report = []
 
     def on_success(w: Workspace, create: bool) -> SuccessHandler[Variable]:
@@ -297,7 +310,8 @@ def configure_variables(
                     break
             if not needs_update:
                 creations_needed.append(new_variable)
-        all_successful = _create_variables(
+
+        create_result = _create_variables(
             base_url,
             headers,
             workspace=workspace,
@@ -305,7 +319,10 @@ def configure_variables(
             on_success=on_success(workspace, True),
             on_failure=on_failure(workspace, True)
         )
-        all_successful = not all_successful or _update_variables(
+        if all_successful:
+            all_successful = create_result
+
+        update_result = _update_variables(
             base_url,
             headers,
             workspace=workspace,
@@ -313,8 +330,11 @@ def configure_variables(
             on_success=on_success(workspace, False),
             on_failure=on_failure(workspace, False)
         )
+        if all_successful:
+            all_successful = update_result
 
     if write_output:
+        print(report)
         print((
             f'Terraform workspace variable configuration results for organization "{organization}" '
             f'at "{terraform_domain}":'

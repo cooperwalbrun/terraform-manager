@@ -39,6 +39,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Bulk lock or unlock selected workspaces
     * Bulk update the Terraform version of selected workspaces
     * Bulk update the working directory of selected workspaces
+    * Bulk update/create variables of selected workspaces (with idempotency)
 
 ## Installation
 
@@ -139,6 +140,27 @@ terraform-manager -o example123 --working-dir dev
 terraform-manager -o example123 --clear-working-dir
 ```
 
+The variable configuration operation is a bit different than the ones above; the input to it is a
+JSON file containing the variables you wish to define. The contents of this file should consist only
+of a JSON array containing one or more JSON objects. To generate an exemplary `template.json` file,
+you may issue the following:
+
+```bash
+terraform-manager --create-vars-template
+```
+
+Note the absence of workspace selection arguments such as organization This is a special operation
+that takes no other arguments. After you configure a JSON file (with a location and name of your
+choosing), you may pass it to the `--configure-vars` argument like so:
+
+```bash
+terraform-manager -o example123 --configure-vars my-vars-file.json
+```
+
+This will create all the variables defined in `my-vars-file.json` in every selected workspace, and
+if any given variable already exists in a workspace (comparison is done by variable key only), it
+will be updated in-place to align with your specified configuration.
+
 ## Usage (Python)
 
 ### Selecting Workspaces (Python)
@@ -182,6 +204,7 @@ workspaces = terraform.workspaces
 
 ```python
 from terraform_manager.entities.terraform import Terraform
+from terraform_manager.entities.variable import Variable
 
 # Have a list of workspaces fetched using e.g. one of the methods shown above
 terraform = Terraform(...)
@@ -200,6 +223,10 @@ success = terraform.set_working_directories("dev")
 
 # Set working directories to empty
 success = terraform.set_working_directories(None)
+
+# Configure variables (first create a list of one or more variable objects, then configure them)
+variables = [Variable(key="some-key", value="not-secret"), Variable(key="other-key", value="secret", sensitive=True)]
+success = terraform.configure_variables(variables)
 ```
 
 ## Contributing

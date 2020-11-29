@@ -244,6 +244,7 @@ def organization_required_main(argument_dictionary: Dict[str, Any]) -> None:
                     # There is no need to write any error messages because a report is written by
                     # the configure_variables method
                     fail()
+        # We do not have to have an "else" because argparse should make fallthrough impossible
 
 
 def main() -> None:

@@ -46,7 +46,7 @@ class Variable:
 
     @staticmethod
     def from_json(json: JSON) -> Optional[Any]:  # Returns an Optional[Variable]
-        if "key" in json and "value" in json:
+        if isinstance(json, dict) and "key" in json and "value" in json:
             return Variable(
                 key=json["key"],
                 value=json["value"],
@@ -74,6 +74,8 @@ class Variable:
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Variable):
-            return self.key == other.key
+            return self.key == other.key and self.value == other.value and \
+                   self.description == other.description and self.category == other.category and \
+                   self.hcl == other.hcl and self.sensitive == other.sensitive
         else:
             return False

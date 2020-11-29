@@ -11,21 +11,6 @@ from terraform_manager.terraform.workspaces import fetch_all
 
 
 class Terraform:
-    """
-    Creates a class instance storing the configuration needed to access the Terraform API for a
-    particular Terraform installation (cloud or enterprise).
-
-    :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
-                             Terraform Cloud or Enterprise).
-    :param organization: The organization containing the workspaces to patch.
-    :param workspace_names: The name(s) of workspace(s) for which data should be fetched. If not
-                            specified, all workspace data will be fetched.
-    :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
-    :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
-    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
-                  token will be searched for in the documented locations.
-    :param write_output: Whether to write informational messages to STDOUT and STDERR.
-    """
     def __init__(
         self,
         terraform_domain: str,
@@ -37,6 +22,22 @@ class Terraform:
         token: Optional[str] = None,
         write_output: bool = False
     ):
+        """
+        Creates a class instance storing the configuration needed to access the Terraform API for a
+        particular Terraform installation (cloud or enterprise).
+
+        :param terraform_domain: The domain corresponding to the targeted Terraform installation
+                                 (either Terraform Cloud or Enterprise).
+        :param organization: The organization containing the workspaces to patch.
+        :param workspace_names: The name(s) of workspace(s) for which data should be fetched. If not
+                                specified, all workspace data will be fetched.
+        :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
+        :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
+        :param token: A token suitable for authenticating against the Terraform API. If not
+                      specified, a token will be searched for in the documented locations.
+        :param write_output: Whether to write informational messages to STDOUT and STDERR.
+        """
+
         self.terraform_domain = terraform_domain
         self.organization = organization
         self.workspace_names = workspace_names

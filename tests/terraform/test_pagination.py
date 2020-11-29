@@ -60,15 +60,15 @@ def test_exhaust_pages_single_page_with_meta_block(mocker: MockerFixture) -> Non
 @responses.activate
 def test_exhaust_pages_bad_json_response(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
-    json = {"not data": {}}
-    responses.add(
-        responses.GET,
-        f"{_test_url}?page[size]=100&page[number]=1",
-        match_querystring=True,
-        json=json,
-        status=200
-    )
-    assert exhaust_pages(_test_url, json_mapper=_simple_mapper) == []
+    for test in [{}, {"not data": {}}]:
+        responses.add(
+            responses.GET,
+            f"{_test_url}?page[size]=100&page[number]=1",
+            match_querystring=True,
+            json=test,
+            status=200
+        )
+        assert exhaust_pages(_test_url, json_mapper=_simple_mapper) == []
 
 
 @responses.activate
