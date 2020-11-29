@@ -1,7 +1,9 @@
 from typing import Optional, List
 
+from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
+from terraform_manager.terraform.variables import configure_variables
 from terraform_manager.terraform.versions import check_versions, patch_versions, \
     write_version_summary, group_by_version
 from terraform_manager.terraform.working_directories import patch_working_directories
@@ -9,6 +11,21 @@ from terraform_manager.terraform.workspaces import fetch_all
 
 
 class Terraform:
+    """
+    Creates a class instance storing the configuration needed to access the Terraform API for a
+    particular Terraform installation (cloud or enterprise).
+
+    :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
+                             Terraform Cloud or Enterprise).
+    :param organization: The organization containing the workspaces to patch.
+    :param workspace_names: The name(s) of workspace(s) for which data should be fetched. If not
+                            specified, all workspace data will be fetched.
+    :param blacklist: Whether to use the specified workspaces as a blacklist-style filter.
+    :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
+    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
+                  token will be searched for in the documented locations.
+    :param write_output: Whether to write informational messages to STDOUT and STDERR.
+    """
     def __init__(
         self,
         terraform_domain: str,
@@ -157,6 +174,28 @@ class Terraform:
             self.workspaces,
             new_working_directory=new_working_directory,
             no_tls=self.no_tls,
+            token=self.token,
+            write_output=self.write_output
+        )
+
+    def configure_variables(self, variables: List[Variable]) -> bool:
+        """
+        Creates or updates (in-place) one or more variables for the workspaces. If variables already
+        exist with same keys, they will instead be updated so that all their fields equal the ones
+        given in the variables passed to this method. This behavior allows this method to be
+        idempotent.
+
+        :param variables: The variables to either create or update.
+        :return: Whether all HTTP operations were successful. If even a single one failed, returns
+                 False.
+        """
+        return configure_variables(
+            self.terraform_domain,
+            self.organization,
+            self.workspaces,
+            variables=variables,
+            no_tls=self.no_tls,
+            token=self.token,
             write_output=self.write_output
         )
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+* Implemented the `--create-vars-template` and `--configure-vars` operations (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Changed
+
+* The Terraform organization must now be specified via the `-o` argument on the CLI (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Fixed
+
+* Tokens specified inline via the `Terraform` class's constructor are now used for the working directory operations (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
 ## 0.3.2 - 2020-11-27
 
 ### Added
@@ -44,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* Fixed an issue with the `--patch-versions` operation (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Resolved the "required positional argument" error in the `--patch-versions` operation (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ## 0.1.3 - 2020-11-22
 
@@ -73,11 +85,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Created the project using PyScaffold (by [@cooperwalbrun](https://github.com/cooperwalbrun))
-* Created initial workspace selection functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
-* Created initial  workspace `--version-summary` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
-* Created initial  workspace `--patch-versions` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
-* Created initial  workspace `--lock`/`--unlock` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
-* Created initial  documentation (`README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`) (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Created the initial workspace selection functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Created the initial workspace `--version-summary` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Created the initial workspace `--patch-versions` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Created the initial workspace `--lock`/`--unlock` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Created the initial documentation (`README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`) (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 * Implemented over 95% code coverage via unit tests (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 * Created GitHub Actions workflows for the `master` branch and pull requests respectively (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 

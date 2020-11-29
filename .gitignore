@@ -146,3 +146,6 @@ cython_debug/
 
 # Visual Studio Code
 .vscode/
+
+# Files specific to terraform-manager
+template.json

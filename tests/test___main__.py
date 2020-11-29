@@ -22,7 +22,8 @@ def _arguments(merge_with: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         "version_summary": False,
         "lock_workspaces": False,
         "unlock_workspaces": False,
-        "clear_working_directory": False
+        "clear_working_directory": False,
+        "create_variables_template": False
     }
     return {**arguments, **merge_with} if merge_with is not None else arguments
 
