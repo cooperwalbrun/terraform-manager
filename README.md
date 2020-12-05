@@ -144,6 +144,9 @@ terraform-manager -o example123 --version-summary
 # Upgrade workspace versions to 0.13.5 and write a report to STDOUT
 terraform-manager -o example123 --patch-versions 0.13.5
 
+# Upgrade workspace versions to 0.13.5 and suppress all output (the -s flag works with all operations)
+terraform-manager -o example123 --patch-versions 0.13.5 -s
+
 # Lock workspaces and write a report to STDOUT
 terraform-manager -o example123 --lock
 

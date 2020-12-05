@@ -139,7 +139,11 @@ def test_passthrough(mocker: MockerFixture) -> None:
 
     terraform.write_version_summary()
     version_summary_mock.assert_called_once_with(
-        TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, False, group_by_version(workspaces)
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        targeting_specific_workspaces=False,
+        data=group_by_version(workspaces),
+        write_output=False
     )
 
     working_directory = "test"

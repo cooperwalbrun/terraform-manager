@@ -189,8 +189,9 @@ class Terraform:
         write_version_summary(
             self.terraform_domain,
             self.organization,
-            self.workspace_names is not None,
-            group_by_version(self.workspaces)
+            targeting_specific_workspaces=self.workspace_names is not None,
+            data=group_by_version(self.workspaces),
+            write_output=self.write_output
         )
 
     def set_working_directories(self, new_working_directory: Optional[str]) -> bool:

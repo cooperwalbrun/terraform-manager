@@ -17,6 +17,7 @@ _bool_flags: Dict[str, bool] = {
     # them
     "no_tls": False,
     "blacklist": False,
+    "silent": False,
     "version_summary": False,
     "lock_workspaces": False,
     "unlock_workspaces": False,
@@ -126,82 +127,101 @@ def test_incompatible_argument_groups(mocker: MockerFixture) -> None:
 
 
 def test_no_tls_against_terraform_cloud(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    fail_mock: MagicMock = _mock_cli_fail(mocker)
-    _mock_fetch_workspaces(mocker, [])
-    _mock_parsed_arguments(mocker, _arguments({"no_tls": True}))
-    _mock_get_group_arguments(mocker)
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        _mock_fetch_workspaces(mocker, [])
+        _mock_parsed_arguments(mocker, _arguments({"silent": silent, "no_tls": True}))
+        _mock_get_group_arguments(mocker)
 
-    main()
+        main()
 
-    print_mock.assert_has_calls([
-        _error_message(
-            "Error: you should not disable SSL/TLS when interacting with Terraform Cloud."
-        )
-    ])
-    assert print_mock.call_count == 1
-    fail_mock.assert_called_once()
+        if silent:
+            print_mock.assert_not_called()
+        else:
+            print_mock.assert_has_calls([
+                _error_message(
+                    "Error: you should not disable SSL/TLS when interacting with Terraform Cloud."
+                )
+            ])
+            assert print_mock.call_count == 1
+        fail_mock.assert_called_once()
 
 
 def test_unexpected_blacklist_flag(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    fail_mock: MagicMock = _mock_cli_fail(mocker)
-    _mock_fetch_workspaces(mocker, [])
-    _mock_parsed_arguments(mocker, _arguments({"blacklist": True}))
-    _mock_get_group_arguments(mocker)
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        _mock_fetch_workspaces(mocker, [])
+        _mock_parsed_arguments(mocker, _arguments({"silent": silent, "blacklist": True}))
+        _mock_get_group_arguments(mocker)
 
-    main()
+        main()
 
-    print_mock.assert_has_calls([
-        _error_message((
-            "Error: the blacklist flag is only applicable when you specify workspace(s) to filter "
-            "on."
-        ))
-    ])
-    assert print_mock.call_count == 1
-    fail_mock.assert_called_once()
+        if silent:
+            print_mock.assert_not_called()
+        else:
+            print_mock.assert_has_calls([
+                _error_message((
+                    "Error: the blacklist flag is only applicable when you specify workspace(s) to "
+                    "filter on."
+                ))
+            ])
+            assert print_mock.call_count == 1
+        fail_mock.assert_called_once()
 
 
 def test_no_workspaces_selected(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    fail_mock: MagicMock = _mock_cli_fail(mocker)
-    _mock_fetch_workspaces(mocker, [])
-    _mock_parsed_arguments(mocker, _arguments())
-    _mock_get_group_arguments(mocker)
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        _mock_fetch_workspaces(mocker, [])
+        _mock_parsed_arguments(mocker, _arguments({"silent": silent}))
+        _mock_get_group_arguments(mocker)
 
-    main()
+        main()
 
-    print_mock.assert_has_calls([
-        _error_message("Error: no workspaces could be found in your organization.")
-    ])
-    assert print_mock.call_count == 1
-    fail_mock.assert_called_once()
+        if silent:
+            print_mock.assert_not_called()
+        else:
+            print_mock.assert_has_calls([
+                _error_message("Error: no workspaces could be found in your organization.")
+            ])
+            assert print_mock.call_count == 1
+        fail_mock.assert_called_once()
 
 
 def test_no_workspaces_selected_with_filter(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    fail_mock: MagicMock = _mock_cli_fail(mocker)
-    _mock_fetch_workspaces(mocker, [])
-    _mock_parsed_arguments(
-        mocker, _arguments({"workspaces": [_test_workspace1.name, _test_workspace2.name]})
-    )
-    _mock_get_group_arguments(mocker)
-
-    main()
-
-    print_mock.assert_has_calls([
-        _error_message(
-            "Error: no workspaces could be found with these name(s): {}, {}".format(
-                _test_workspace1.name, _test_workspace2.name
-            )
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        _mock_fetch_workspaces(mocker, [])
+        _mock_parsed_arguments(
+            mocker,
+            _arguments({
+                "silent": silent, "workspaces": [_test_workspace1.name, _test_workspace2.name]
+            })
         )
-    ])
-    assert print_mock.call_count == 1
-    fail_mock.assert_called_once()
+        _mock_get_group_arguments(mocker)
+
+        main()
+
+        if silent:
+            print_mock.assert_not_called()
+        else:
+            print_mock.assert_has_calls([
+                _error_message(
+                    "Error: no workspaces could be found with these name(s): {}, {}".format(
+                        _test_workspace1.name, _test_workspace2.name
+                    )
+                )
+            ])
+            assert print_mock.call_count == 1
+        fail_mock.assert_called_once()
 
 
 def test_version_summary(mocker: MockerFixture) -> None:
@@ -246,50 +266,67 @@ def test_patch_versions(mocker: MockerFixture) -> None:
 
 
 def test_patch_versions_invalid_version(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    fail_mock: MagicMock = _mock_cli_fail(mocker)
-    desired_version = "NOT-A-VALID-SEMANTIC-VERSION"
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_parsed_arguments(mocker, _arguments({"patch_versions": desired_version}))
-    _mock_get_group_arguments(mocker)
-
-    main()
-
-    print_mock.assert_has_calls([
-        _error_message(
-            f"Error: the value for patch_versions you specified ({desired_version}) is not valid."
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        desired_version = "NOT-A-VALID-SEMANTIC-VERSION"
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+        _mock_parsed_arguments(
+            mocker, _arguments({
+                "silent": silent, "patch_versions": desired_version
+            })
         )
-    ])
-    assert print_mock.call_count == 1
-    fail_mock.assert_called_once()
+        _mock_get_group_arguments(mocker)
+
+        main()
+
+        if silent:
+            print_mock.assert_not_called()
+        else:
+            print_mock.assert_has_calls([
+                _error_message((
+                    f"Error: the value for patch_versions you specified ({desired_version}) is not "
+                    f"valid."
+                ))
+            ])
+            assert print_mock.call_count == 1
+        fail_mock.assert_called_once()
 
 
 def test_patch_versions_downgrade_version(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    fail_mock: MagicMock = _mock_cli_fail(mocker)
-    check_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.check_versions", return_value=False
-    )
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    # The version specified below does not actually matter for this test because we are forcing
-    # False to return from check_versions with the mock above
-    desired_version = "0.13.0"
-    _mock_parsed_arguments(mocker, _arguments({"patch_versions": desired_version}))
-    _mock_get_group_arguments(mocker)
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        check_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.check_versions", return_value=False
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+        # The version specified below does not actually matter for this test because we are forcing
+        # False to return from check_versions with the mock above
+        desired_version = "0.13.0"
+        _mock_parsed_arguments(
+            mocker, _arguments({
+                "silent": silent, "patch_versions": desired_version
+            })
+        )
+        _mock_get_group_arguments(mocker)
 
-    main()
+        main()
 
-    check_mock.assert_called_once_with(desired_version)
-    print_mock.assert_has_calls([
-        _error_message((
-            "Error: at least one of the target workspaces has a version newer than the one you are "
-            "attempting to change to. No workspaces were updated."
-        ))
-    ])
-    assert print_mock.call_count == 1
-    fail_mock.assert_called_once()
+        check_mock.assert_called_once_with(desired_version)
+        if silent:
+            print_mock.assert_not_called()
+        else:
+            print_mock.assert_has_calls([
+                _error_message((
+                    "Error: at least one of the target workspaces has a version newer than the one "
+                    "you are attempting to change to. No workspaces were updated."
+                ))
+            ])
+            assert print_mock.call_count == 1
+        fail_mock.assert_called_once()
 
 
 def test_lock_workspaces(mocker: MockerFixture) -> None:
