@@ -4,6 +4,7 @@ from requests import Response
 from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.terraform.credentials import find_token
 
+CLOUD_DOMAIN: str = "app.terraform.io"
 LATEST_VERSION: str = "latest"  # The string Terraform uses when a workspace is set to auto-update
 HTTP_CONTENT_TYPE: str = "application/vnd.api+json"
 

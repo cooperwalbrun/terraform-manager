@@ -1,7 +1,9 @@
+import sys
 from typing import Optional, List
 
 from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
+from terraform_manager.terraform import CLOUD_DOMAIN
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 from terraform_manager.terraform.variables import configure_variables, delete_variables
 from terraform_manager.terraform.versions import check_versions, patch_versions, \
@@ -49,6 +51,32 @@ class Terraform:
         self._options_hash: int = self._compute_options_hash()
         self._workspace_cache: Optional[List[Workspace]] = None
 
+    def configuration_is_valid(self) -> bool:
+        """
+        Checks the configuration with which this Terraform instance was created for validity.
+
+        :return: Whether the configuration is valid.
+        """
+
+        if self.terraform_domain == CLOUD_DOMAIN and self.no_tls:
+            if self.write_output:
+                print(
+                    "Error: you should not disable SSL/TLS when interacting with Terraform Cloud.",
+                    file=sys.stderr
+                )
+            return False
+        elif (self.workspace_names is None or len(self.workspace_names) == 0) and self.blacklist:
+            if self.write_output:
+                # yapf: disable
+                print((
+                    "Error: the blacklist flag is only applicable when you specify workspace(s) to "
+                    "filter on."
+                ), file=sys.stderr)
+                # yapf: enable
+            return False
+        else:
+            return True
+
     def _compute_options_hash(self) -> int:
         # We only compute the hash of options that influence which workspaces are returned by the
         # workspace fetch
@@ -69,9 +97,13 @@ class Terraform:
         this Terraform class instance, the workspaces will be re-fetched the next time this property
         is accessed.
 
-        :return: The fetched workspaces, if any.
+        :return: The fetched workspaces, if any. If the configuration in this Terraform instance is
+                 not valid, an empty list will be returned.
         """
+
         if self._workspace_cache is None or self._options_hash != self._compute_options_hash():
+            if not self.configuration_is_valid():
+                return []
             self._options_hash = self._compute_options_hash()
             self._workspace_cache = fetch_all(
                 self.terraform_domain,

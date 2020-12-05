@@ -2,9 +2,10 @@ import random
 import string
 
 from terraform_manager.entities.workspace import Workspace
+from terraform_manager.terraform import CLOUD_DOMAIN
 
 TEST_ORGANIZATION: str = "test"
-TEST_TERRAFORM_DOMAIN: str = "app.terraform.io"
+TEST_TERRAFORM_DOMAIN: str = CLOUD_DOMAIN
 TEST_API_URL: str = f"https://{TEST_TERRAFORM_DOMAIN}/api/v2"
 
 
