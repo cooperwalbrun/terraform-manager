@@ -121,9 +121,17 @@ _operation_group.add_argument(
     metavar="<variables file>",
     dest="configure_variables",
     help=(
-        "Creates/updates the variables specified in the given file in the workspaces. See "
+        "Creates/updates the variables specified in the given file in the workspaces. See also "
         "--create-vars-template."
     )
+)
+_operation_group.add_argument(
+    "--delete-vars",
+    type=str,
+    metavar="<key>",
+    nargs="+",
+    dest="delete_variables",
+    help="Deletes the variables specified by-key in the workspaces."
 )
 
 
@@ -243,6 +251,17 @@ def organization_required_main(argument_dictionary: Dict[str, Any]) -> None:
                 if not total_success:
                     # There is no need to write any error messages because a report is written by
                     # the configure_variables method
+                    fail()
+        elif argument_dictionary.get("delete_variables") is not None:
+            variables_to_delete: List[str] = argument_dictionary["delete_variables"]
+            if len(variables_to_delete) == 0:
+                print(f"Error: no variables specified for deletion.", file=sys.stderr)
+                fail()
+            else:
+                total_success = terraform.delete_variables(variables_to_delete)
+                if not total_success:
+                    # There is no need to write any error messages because a report is written by
+                    # the delete_variables method
                     fail()
         # We do not have to have an "else" because argparse should make fallthrough impossible
 

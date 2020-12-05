@@ -43,8 +43,16 @@ def lock_or_unlock_workspaces(
     for workspace in workspaces:
         url = f"{base_url}/workspaces/{workspace.workspace_id}/actions/{operation}"
         response = safe_http_request(lambda: throttle(lambda: requests.post(url, headers=headers)))
-        if response.status_code == 200 or response.status_code == 409:
+        if response.status_code == 200:
             report.append([workspace.name, workspace.is_locked, set_lock, "success", "none"])
+        elif response.status_code == 409:
+            report.append([
+                workspace.name,
+                workspace.is_locked,
+                set_lock,
+                "success",
+                f"workspace was already {operation}ed"
+            ])
         else:
             all_successful = False
             report.append([

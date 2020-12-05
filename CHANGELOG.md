@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+* Implemented the `--delete-vars` operation (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* The `--lock` and `--unlock` operations will now write descriptive messages about prior lock states in the report (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Fixed
+
+* Removed unexpected console output during the `--configure-vars` operation and added unit test assertions to prevent this in the future (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
 ## 0.4.0 - 2020-11-29
 
 ### Added

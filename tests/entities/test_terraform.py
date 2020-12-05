@@ -46,6 +46,9 @@ def test_passthrough(mocker: MockerFixture) -> None:
     configure_variables_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.configure_variables", return_value=True
     )
+    delete_variables_mock: MagicMock = mocker.patch(
+        "terraform_manager.entities.terraform.delete_variables", return_value=True
+    )
 
     terraform = Terraform(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION)
 
@@ -107,6 +110,17 @@ def test_passthrough(mocker: MockerFixture) -> None:
     variables = []
     assert terraform.configure_variables(variables)
     configure_variables_mock.assert_called_once_with(
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        workspaces,
+        variables=variables,
+        no_tls=False,
+        token=None,
+        write_output=False
+    )
+
+    assert terraform.delete_variables(variables)
+    delete_variables_mock.assert_called_once_with(
         TEST_TERRAFORM_DOMAIN,
         TEST_ORGANIZATION,
         workspaces,

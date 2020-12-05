@@ -118,6 +118,7 @@ def test_no_workspaces_selected_with_filter(mocker: MockerFixture) -> None:
             )
         )
     ])
+    assert print_mock.call_count == 1
     fail_mock.assert_called_once()
 
 
@@ -172,6 +173,7 @@ def test_patch_versions_invalid_version(mocker: MockerFixture) -> None:
             f"Error: the value for patch_versions you specified ({desired_version}) is not valid."
         )
     ])
+    assert print_mock.call_count == 1
     fail_mock.assert_called_once()
 
 
@@ -196,6 +198,7 @@ def test_patch_versions_downgrade_version(mocker: MockerFixture) -> None:
             "attempting to change to. No workspaces were updated."
         ))
     ])
+    assert print_mock.call_count == 1
     fail_mock.assert_called_once()
 
 
@@ -341,3 +344,23 @@ def test_configure_variables_nothing_parsed(mocker: MockerFixture) -> None:
     parse_mock.assert_called_once_with(variables_file, write_output=True)
     configure_mock.assert_not_called()
     fail_mock.assert_called_once()
+
+
+def test_delete_variables(mocker: MockerFixture) -> None:
+    for success in [True, False]:
+        fail_mock: MagicMock = mocker.patch("terraform_manager.__main__.fail", return_value=None)
+        delete_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.delete_variables", return_value=success
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+
+        variables_to_delete = ["some-key"]
+        _mock_arguments(mocker, _arguments({"delete_variables": variables_to_delete}))
+
+        main()
+
+        delete_mock.assert_called_once_with(variables_to_delete)
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()

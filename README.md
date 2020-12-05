@@ -39,7 +39,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Bulk lock or unlock selected workspaces
     * Bulk update the Terraform version of selected workspaces
     * Bulk update the working directory of selected workspaces
-    * Bulk update/create variables of selected workspaces (with idempotency)
+    * Bulk update/create/delete variables of selected workspaces (with idempotency)
 
 ## Installation
 
@@ -52,7 +52,8 @@ pip install terraform-manager
 
 >Note: if you are planning to target a Terraform Enterprise installation that uses a private CA for
 >SSL/TLS, you may have to import your custom client certificate(s) into `certifi`'s `cacert.pem`
->before `terraform-manager` operations will function properly.
+>before `terraform-manager` operations will function properly. Make sure you modify the version of
+>`certifi` that `terraform-manager` uses.
 
 ## Configuration
 
@@ -138,9 +139,12 @@ terraform-manager -o example123 --working-dir dev
 
 # Set working directories to empty and write a report to STDOUT
 terraform-manager -o example123 --clear-working-dir
+
+# Delete variables with keys "some-key" and "other-key"
+terraform-manager -o example123 --delete-vars some-key other-key
 ```
 
-The variable configuration operation is a bit different than the ones above; the input to it is a
+The variable configuration operation is a bit different from the ones above; the input to it is a
 JSON file containing the variables you wish to define. The contents of this file should consist only
 of a JSON array containing one or more JSON objects. To generate an example `template.json` file,
 you may issue the following:
@@ -233,10 +237,10 @@ variables = [
     Variable(key="other-key", value="secret", sensitive=True)
 ]
 success = terraform.configure_variables(variables)
-```
 
-Bear in mind that variables are compared to each other by key only when `terraform-manager`
-determines whether to create versus update (in-place) the variable in a given workspace.
+# Delete variables with keys "some-key" and "other-key"
+success = terraform.delete_variables(["some-key", "other-key"])
+```
 
 ## Contributing
 

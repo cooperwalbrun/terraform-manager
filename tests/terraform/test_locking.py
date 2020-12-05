@@ -16,9 +16,9 @@ def _establish_mocks(mocker: MockerFixture) -> None:
 @responses.activate
 def test_lock_or_unlock_workspaces(mocker: MockerFixture) -> None:
     _establish_mocks(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
     for test in [True, False]:
         for status in [200, 409]:  # The POST returns 409 if a workspace is already locked/unlocked
+            print_mock: MagicMock = mocker.patch("builtins.print")
             operation = "lock" if test else "unlock"
             _test_workspace1 = test_workspace(locked=not test)
             _test_workspace2 = test_workspace(locked=True)
@@ -62,7 +62,7 @@ def test_lock_or_unlock_workspaces(mocker: MockerFixture) -> None:
                                 _test_workspace1.is_locked,
                                 test,
                                 "success",
-                                "none"
+                                "none" if status == 200 else f"workspace was already {operation}ed"
                             ]
                         ],
                         headers=[
@@ -77,3 +77,4 @@ def test_lock_or_unlock_workspaces(mocker: MockerFixture) -> None:
                 call()
             ])
             # yapf: enable
+            assert print_mock.call_count == 4
