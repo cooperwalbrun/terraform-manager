@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Nothing currently!
+
+## 0.4.2 - 2020-12-05
+
 ### Added
 
 * Added a `configuration_is_valid()` method to the `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
