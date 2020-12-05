@@ -109,7 +109,13 @@ def test_patch_versions(mocker: MockerFixture) -> None:
 
 def test_write_version_summary(mocker: MockerFixture) -> None:
     print_mock: MagicMock = mocker.patch("builtins.print")
-    write_version_summary(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, False, _groups)
+    write_version_summary(
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        targeting_specific_workspaces=False,
+        data=_groups,
+        write_output=True
+    )
     print_mock.assert_has_calls([
         call(_version_summary_statement),
         call(),
@@ -123,7 +129,13 @@ def test_write_version_summary(mocker: MockerFixture) -> None:
 
 def test_write_version_summary_filtered(mocker: MockerFixture) -> None:
     print_mock: MagicMock = mocker.patch("builtins.print")
-    write_version_summary(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, True, _groups)
+    write_version_summary(
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        targeting_specific_workspaces=True,
+        data=_groups,
+        write_output=True
+    )
     print_mock.assert_has_calls([
         call(_version_summary_statement),
         call(),
@@ -138,7 +150,13 @@ def test_write_version_summary_filtered(mocker: MockerFixture) -> None:
 
 def test_write_version_summary_single_version(mocker: MockerFixture) -> None:
     print_mock: MagicMock = mocker.patch("builtins.print")
-    write_version_summary(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, False, {"0.13.5": [_0_13_5]})
+    write_version_summary(
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        targeting_specific_workspaces=False,
+        data={"0.13.5": [_0_13_5]},
+        write_output=True
+    )
     print_mock.assert_has_calls([
         call(_version_summary_statement),
         call(),

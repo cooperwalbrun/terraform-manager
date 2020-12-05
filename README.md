@@ -1,6 +1,8 @@
 # terraform-manager ![master](https://github.com/cooperwalbrun/terraform-manager/workflows/master/badge.svg) ![PyPI](https://img.shields.io/pypi/v/terraform-manager) ![Code Coverage](https://img.shields.io/badge/coverage-over%2095%25-blue)
 
 1. [Overview](#overview)
+    1. [Feature Summary](#feature-summary)
+    2. [Limitations](#limitations)
 2. [Installation](#installation)
 3. [Configuration](#configuration)
     1. [Terraform CLI Configuration](#terraform-cli-configuration)
@@ -20,6 +22,8 @@
 in batch fashion. It is specifically designed to help Terraform administrators manage arbitrarily
 many workspaces at once. It is also compatible with both Terraform Cloud and Terraform Enterprise,
 so regardless of what you or your company is using, this CLI can provide value.
+
+### Feature Summary
 
 Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 
@@ -44,6 +48,14 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Designed with security in mind:
     * The Python API of this module has built-in validation to prevent unsafe/invalid HTTP requests to the Terraform API
     * `terraform-manager` will never leak your Terraform token to the console, even if an error occurs
+
+### Limitations
+
+* Due to the rate-limiting restrictions imposed by the Terraform API, this module currently does not
+  officially support execution in a multi-threaded fashion (the rate limit is enforced by blocking
+  on the current thread)
+* `terraform-helper` is only tested against Python 3.6, 3.7, 3.8, and 3.9, so these are the only
+  supported Python distributions
 
 ## Installation
 
@@ -131,6 +143,9 @@ terraform-manager -o example123 --version-summary
 
 # Upgrade workspace versions to 0.13.5 and write a report to STDOUT
 terraform-manager -o example123 --patch-versions 0.13.5
+
+# Upgrade workspace versions to 0.13.5 and suppress all output (the -s flag works with all operations)
+terraform-manager -o example123 --patch-versions 0.13.5 -s
 
 # Lock workspaces and write a report to STDOUT
 terraform-manager -o example123 --lock

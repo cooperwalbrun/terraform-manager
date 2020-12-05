@@ -123,8 +123,10 @@ def patch_versions(
 def write_version_summary(
     terraform_domain: str,
     organization: str,
+    *,
     targeting_specific_workspaces: bool,
-    data: VersionSummary
+    data: VersionSummary,
+    write_output: bool = False
 ) -> None:
     """
     Writes a tabulated summary of the workspaces and their versions to STDOUT. Long lines will be
@@ -136,29 +138,35 @@ def write_version_summary(
     :param targeting_specific_workspaces: Whether one or more workspaces was specified in order to
                                           filter the list of workspaces when they were fetched.
     :param data: The raw data to format and print to STDOUT.
+    :param write_output: Whether to print a tabulated report to STDOUT.
     :return: None
     """
 
-    print(f'Terraform version summary for organization "{organization}" at "{terraform_domain}":')
-    print()
-    if len(data) != 1 or targeting_specific_workspaces:
-        table_data = []
-        for version, workspaces in data.items():
-            formatted_workspaces = ", ".join(sorted([workspace.name for workspace in workspaces]))
-            formatted_workspaces = os.linesep.join(
-                textwrap.wrap(formatted_workspaces, width=80, break_long_words=False)
-            )
-            table_data.append([version, formatted_workspaces])
-    else:
-        table_data = [[list(data.keys())[0], "All"]]
-    print(
-        tabulate(
-            sorted(table_data, key=lambda x: x[0], reverse=True),
-            headers=["Version", "Workspaces"],
-            colalign=("right", )
+    if write_output:
+        print(
+            f'Terraform version summary for organization "{organization}" at "{terraform_domain}":'
         )
-    )
-    if targeting_specific_workspaces:
-        print(f"{os.linesep}Note: information is only being displayed for certain workspaces.")
+        print()
+        if len(data) != 1 or targeting_specific_workspaces:
+            table_data = []
+            for version, workspaces in data.items():
+                formatted_workspaces = ", ".join(
+                    sorted([workspace.name for workspace in workspaces])
+                )
+                formatted_workspaces = os.linesep.join(
+                    textwrap.wrap(formatted_workspaces, width=80, break_long_words=False)
+                )
+                table_data.append([version, formatted_workspaces])
+        else:
+            table_data = [[list(data.keys())[0], "All"]]
+        print(
+            tabulate(
+                sorted(table_data, key=lambda x: x[0], reverse=True),
+                headers=["Version", "Workspaces"],
+                colalign=("right", )
+            )
+        )
+        if targeting_specific_workspaces:
+            print(f"{os.linesep}Note: information is only being displayed for certain workspaces.")
 
-    print()
+        print()

@@ -61,6 +61,16 @@ _selection_group.add_argument(
     dest="blacklist",
     help="Inverts the workspace selection criteria (see --workspaces)."
 )
+_selection_group.add_argument(
+    "-s",
+    "--silent",
+    action="store_true",
+    dest="silent",
+    help=(
+        "Disables all STDOUT and STDERR output. Use with caution, as this will revoke all "
+        "potentially helpful error messages."
+    )
+)
 
 _operation_group.add_argument(
     "--version-summary",
@@ -148,6 +158,8 @@ def _parse_arguments(arguments: List[str]) -> Dict[str, Any]:
 
 def _get_selection_argument(arguments: List[str]) -> Optional[str]:  # pragma: no cover
     flags = [
+        # Note: despite --silent being in the "selection" parser group, is it not really a selection
+        # flag, so it is not checked in this function
         "-o",
         "--organization",
         "--domain",
@@ -174,7 +186,7 @@ def _get_special_argument(arguments: List[str]) -> Optional[str]:  # pragma: no 
 
 def _no_selection_arguments_main(arguments: Dict[str, Any]) -> None:
     if arguments["create_variables_template"]:
-        cli_handlers.create_variables_template()
+        cli_handlers.create_variables_template(arguments["silent"])
 
 
 def _organization_required_main(arguments: Dict[str, Any]) -> None:
@@ -186,6 +198,7 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
     workspaces_to_target: Optional[List[str]] = arguments.get("workspaces")
     blacklist: bool = arguments["blacklist"]
     no_tls: bool = arguments["no_tls"]
+    silent: bool = arguments["silent"]
 
     terraform: Terraform = Terraform(
         domain,
@@ -194,7 +207,7 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         blacklist=blacklist,
         no_tls=no_tls,
         token=None,  # We disallow specifying a token inline at the CLI for security reasons
-        write_output=True
+        write_output=(not silent)
     )
     if not terraform.configuration_is_valid() or not cli_handlers.validate(terraform):
         cli_handlers.fail()
