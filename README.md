@@ -16,10 +16,10 @@
 
 ## Overview
 
-`terraform-manager` is a multipurpose CLI tool for managing Terraform workspaces in batch fashion.
-It is specifically designed to help Terraform administrators manage many workspaces at once. It is
-also compatible with both Terraform Cloud and Terraform Enterprise, so regardless of what you or
-your company is using, this CLI can provide value.
+`terraform-manager` is a multipurpose Python module and CLI tool for managing Terraform workspaces
+in batch fashion. It is specifically designed to help Terraform administrators manage arbitrarily
+many workspaces at once. It is also compatible with both Terraform Cloud and Terraform Enterprise,
+so regardless of what you or your company is using, this CLI can provide value.
 
 Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 
