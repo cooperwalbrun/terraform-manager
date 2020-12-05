@@ -10,7 +10,7 @@ from terraform_manager.terraform.variables import parse_variables
 def _fallible(operation: bool) -> None:
     if not operation:
         # There is no need to write any error messages because a report should be written by the
-        # "operation" lambda
+        # "operation"
         fail()
 
 
