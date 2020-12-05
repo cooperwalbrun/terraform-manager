@@ -1,8 +1,10 @@
+import sys
 from unittest.mock import MagicMock, call
 
 from pytest_mock import MockerFixture
 from terraform_manager.entities.terraform import Terraform
 from terraform_manager.entities.workspace import Workspace
+from terraform_manager.terraform import CLOUD_DOMAIN
 from terraform_manager.terraform.versions import group_by_version
 
 from tests.utilities.tooling import test_workspace, TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION
@@ -23,6 +25,51 @@ def test_lazy_workspace_fetching(mocker: MockerFixture) -> None:
     terraform.token = "test"
     workspaces3 = terraform.workspaces
     assert fetch_mock.call_count == 2
+
+
+def test_configuration_validation_no_tls_against_terraform_cloud(mocker: MockerFixture) -> None:
+    fetch_mock: MagicMock = mocker.patch(
+        "terraform_manager.entities.terraform.fetch_all", return_value=[_test_workspace]
+    )
+    print_mock: MagicMock = mocker.patch("builtins.print")
+    terraform = Terraform(
+        CLOUD_DOMAIN,
+        TEST_ORGANIZATION,
+        workspace_names=[_test_workspace.name],
+        no_tls=True,
+        write_output=True
+    )
+    assert not terraform.configuration_is_valid()
+    print_mock.assert_called_once_with(
+        "Error: you should not disable SSL/TLS when interacting with Terraform Cloud.",
+        file=sys.stderr
+    )
+    assert terraform.workspaces == []
+    fetch_mock.assert_not_called()
+
+
+def test_configuration_validation_unexpected_blacklist_flag(mocker: MockerFixture) -> None:
+    for test in [None, []]:
+        fetch_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.fetch_all", return_value=[_test_workspace]
+        )
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        terraform = Terraform(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION,
+            workspace_names=test,
+            blacklist=True,
+            write_output=True
+        )
+        assert not terraform.configuration_is_valid()
+        # yapf: disable
+        print_mock.assert_called_once_with((
+            "Error: the blacklist flag is only applicable when you specify workspace(s) to filter "
+            "on."
+        ), file=sys.stderr)
+        # yapf: enable
+        assert terraform.workspaces == []
+        fetch_mock.assert_not_called()
 
 
 def test_passthrough(mocker: MockerFixture) -> None:

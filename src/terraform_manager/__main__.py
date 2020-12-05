@@ -2,10 +2,9 @@ import sys
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional, Dict, Any
 
-import semver
+from terraform_manager import cli_handlers
 from terraform_manager.entities.terraform import Terraform
-from terraform_manager.terraform import LATEST_VERSION
-from terraform_manager.terraform.variables import create_variables_template, parse_variables
+from terraform_manager.terraform import CLOUD_DOMAIN
 
 _parser: ArgumentParser = ArgumentParser(
     description="Manages Terraform workspaces in batch fashion."
@@ -140,142 +139,57 @@ def parse_arguments(arguments: List[str]) -> Dict[str, Any]:
     return vars(arguments)
 
 
-def fail() -> None:
-    sys.exit(1)
-
-
 def no_required_arguments_main(argument_dictionary: Dict[str, Any]) -> None:
     if argument_dictionary["create_variables_template"]:
-        success = create_variables_template(write_output=True)
-        if not success:
-            # There is no need to write any error messages because they will be written by the
-            # create_variables_template method
-            fail()
+        cli_handlers.create_variables_template()
 
 
-def organization_required_main(argument_dictionary: Dict[str, Any]) -> None:
-    organization: str = argument_dictionary["organization"]
-    raw_domain: Optional[str] = argument_dictionary.get("domain")
-    domain: str = "app.terraform.io" if raw_domain is None else raw_domain.lower()
-    workspaces_to_target: Optional[List[str]] = argument_dictionary.get("workspaces")
-    blacklist: bool = argument_dictionary["blacklist"]
-    no_tls: bool = argument_dictionary["no_tls"]
+def organization_required_main(arguments: Dict[str, Any]) -> None:
+    organization: str = arguments["organization"]
+    domain: Optional[str] = arguments.get("domain", CLOUD_DOMAIN).lower()
+    workspaces_to_target: Optional[List[str]] = arguments.get("workspaces")
+    blacklist: bool = arguments["blacklist"]
+    no_tls: bool = arguments["no_tls"]
 
-    if domain == "app.terraform.io" and no_tls:
-        print(
-            "Error: you should never disable SSL/TLS when interacting with Terraform Cloud.",
-            file=sys.stderr
-        )
-        fail()
-    elif workspaces_to_target is None and blacklist:
-        # yapf: disable
-        print((
-            "Error: the blacklist flag is only applicable when you specify a workspace(s) to "
-            "filter on."
-        ), file=sys.stderr)
-        # yapf: enable
-        fail()
+    terraform: Terraform = Terraform(
+        domain,
+        organization,
+        workspace_names=workspaces_to_target,
+        blacklist=blacklist,
+        no_tls=no_tls,
+        token=None,  # We disallow specifying a token inline at the CLI for security reasons
+        write_output=True
+    )
+    if not terraform.configuration_is_valid() or not cli_handlers.validate(terraform):
+        cli_handlers.fail()
+    elif arguments["version_summary"]:
+        terraform.write_version_summary()
+    elif arguments.get("patch_versions") is not None:
+        cli_handlers.patch_versions(terraform, arguments["patch_versions"])
+    elif arguments["lock_workspaces"] or arguments["unlock_workspaces"]:
+        cli_handlers.lock_or_unlock_workspaces(terraform, arguments["lock_workspaces"])
+    elif arguments.get("working_directory") is not None or arguments["clear_working_directory"]:
+        cli_handlers.set_working_directories(terraform, arguments.get("working_directory"))
+    elif arguments.get("configure_variables") is not None:
+        cli_handlers.configure_variables(terraform, arguments["configure_variables"])
+    elif arguments.get("delete_variables") is not None:
+        cli_handlers.delete_variables(terraform, arguments["delete_variables"])
     else:
-        terraform: Terraform = Terraform(
-            domain,
-            organization,
-            workspace_names=workspaces_to_target,
-            blacklist=blacklist,
-            no_tls=no_tls,
-            token=None,  # We disallow specifying a token inline at the CLI for security reasons
-            write_output=True
-        )
-        if len(terraform.workspaces) == 0:
-            if workspaces_to_target is not None:
-                names = ", ".join(workspaces_to_target)
-                print(
-                    f"Error: no workspaces could be found with these name(s): {names}",
-                    file=sys.stderr
-                )
-            else:
-                print("Error: no workspaces could be found in your organization.", file=sys.stderr)
-            fail()
-        elif argument_dictionary["version_summary"]:
-            terraform.write_version_summary()
-        elif argument_dictionary.get("patch_versions") is not None:
-            desired_version = argument_dictionary["patch_versions"]
-            if not semver.VersionInfo.isvalid(desired_version) and \
-                    desired_version != LATEST_VERSION:
-                # yapf: disable
-                print((
-                    f"Error: the value for patch_versions you specified ({desired_version}) is not "
-                    "valid."
-                ), file=sys.stderr)
-                # yapf: enable
-                fail()
-            elif not terraform.check_versions(desired_version):
-                # yapf: disable
-                print((
-                    "Error: at least one of the target workspaces has a version newer than the one "
-                    "you are attempting to change to. No workspaces were updated."
-                ), file=sys.stderr)
-                # yapf: enable
-                fail()
-            else:
-                total_success = terraform.patch_versions(desired_version)
-                if not total_success:
-                    # There is no need to write any error messages because a report is written by
-                    # the patch_versions method
-                    fail()
-        elif argument_dictionary["lock_workspaces"] or argument_dictionary["unlock_workspaces"]:
-            if argument_dictionary["lock_workspaces"]:
-                total_success = terraform.lock_workspaces()
-            else:
-                total_success = terraform.unlock_workspaces()
-            if not total_success:
-                # There is no need to write any error messages because a report is written by the
-                # lock_or_unlock_workspaces method
-                fail()
-        elif argument_dictionary.get("working_directory") is not None or \
-                argument_dictionary["clear_working_directory"]:
-            total_success = terraform.set_working_directories(
-                argument_dictionary.get("working_directory")
-            )
-            if not total_success:
-                # There is no need to write any error messages because a report is written by the
-                # patch_working_directories method
-                fail()
-        elif argument_dictionary.get("configure_variables") is not None:
-            file = argument_dictionary["configure_variables"]
-            variables = parse_variables(file, write_output=True)
-            if len(variables) == 0:
-                print(f"Error: no variable definitions found in {file}.", file=sys.stderr)
-                fail()
-            else:
-                total_success = terraform.configure_variables(variables)
-                if not total_success:
-                    # There is no need to write any error messages because a report is written by
-                    # the configure_variables method
-                    fail()
-        elif argument_dictionary.get("delete_variables") is not None:
-            variables_to_delete: List[str] = argument_dictionary["delete_variables"]
-            if len(variables_to_delete) == 0:
-                print(f"Error: no variables specified for deletion.", file=sys.stderr)
-                fail()
-            else:
-                total_success = terraform.delete_variables(variables_to_delete)
-                if not total_success:
-                    # There is no need to write any error messages because a report is written by
-                    # the delete_variables method
-                    fail()
-        # We do not have to have an "else" because argparse should make fallthrough impossible
+        # We do not technically need this "else" block because argparse should make fallthrough
+        # impossible, but it is better to be safe than sorry
+        cli_handlers.fail()
 
 
 def main() -> None:
-    argument_dictionary = parse_arguments(sys.argv[1:])
+    arguments = parse_arguments(sys.argv[1:])
 
-    if argument_dictionary["create_variables_template"]:
-        no_required_arguments_main(argument_dictionary)
-    elif "organization" not in argument_dictionary:
+    if arguments["create_variables_template"]:
+        no_required_arguments_main(arguments)
+    elif "organization" not in arguments:
         print("Error: you must specify an organization to target.", file=sys.stderr)
-        fail()
+        cli_handlers.fail()
     else:
-        organization_required_main(argument_dictionary)
+        organization_required_main(arguments)
 
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Designed to either be usable as a CLI tool or called directly from Python code:
     * System exits are centralized at the CLI entrypoint
     * All console output is suppressed by default (opt-in)
+    * All documented Python operations are also available via the CLI
 * Flexible credential configuration (multiple ways to specify your Terraform token)
 * Powerful functionality for selecting an organization's workspaces to target with operations:
     * Select workspaces in either whitelist or blacklist style
@@ -197,12 +198,20 @@ terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"])
 terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"], blacklist=True)
 ```
 
-After constructing an instance of `Terraform`, you can access the selected workspaces like so:
+After constructing an instance of `Terraform`, you can optionally validate the arguments that you
+passed to its constructor. This validation is intended to help you avoid security vulnerabilities
+and/or unexpected behavior. Then, you can finally access the selected workspaces as shown below.
 
 ```python
 terraform = Terraform(...)
-workspaces = terraform.workspaces
+if terraform.configuration_is_valid():
+    selected_workspaces = terraform.workspaces
+    # Do stuff
 ```
+
+Be aware that `terraform.workspaces` implicitly calls `configuration_is_valid()`, and if the
+configuration is not valid, `terraform.workspaces` will always return an empty list without
+attempting to query the Terraform API.
 
 ### Operations (Python)
 
