@@ -3,7 +3,7 @@ from typing import Optional, List
 from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
-from terraform_manager.terraform.variables import configure_variables
+from terraform_manager.terraform.variables import configure_variables, delete_variables
 from terraform_manager.terraform.versions import check_versions, patch_versions, \
     write_version_summary, group_by_version
 from terraform_manager.terraform.working_directories import patch_working_directories
@@ -179,6 +179,26 @@ class Terraform:
             write_output=self.write_output
         )
 
+    def delete_variables(self, variables: List[str]) -> bool:
+        """
+        Deletes one or more variables for the workspaces. If a variable does not exist in a
+        particular workspace, no operation is performed relative to that variable (this is a safe
+        operation). This behavior allows this method to be idempotent.
+
+        :param variables: The keys of the variables to delete.
+        :return: Whether all HTTP operations were successful. If even a single one failed, returns
+                 False.
+        """
+        return delete_variables(
+            self.terraform_domain,
+            self.organization,
+            self.workspaces,
+            variables=variables,
+            no_tls=self.no_tls,
+            token=self.token,
+            write_output=self.write_output
+        )
+
     def configure_variables(self, variables: List[Variable]) -> bool:
         """
         Creates or updates (in-place) one or more variables for the workspaces. If variables already
@@ -202,8 +222,8 @@ class Terraform:
 
     def __repr__(self):
         return (
-            "Terraform(domain={}, organization={}, workspaces=List[{}], blacklist={}, "
-            "no_tls={}, token={}, write_output={})"
+            "Terraform(domain={}, organization={}, workspaces=List[{}], blacklist={}, no_tls={}, "
+            "token={}, write_output={})"
         ).format(
             self.terraform_domain,
             self.organization,

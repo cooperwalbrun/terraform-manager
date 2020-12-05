@@ -12,4 +12,4 @@ requests==2.25.0          # via terraform-manager (setup.py)
 semver==2.13.0            # via terraform-manager (setup.py)
 tabulate==0.8.7           # via terraform-manager (setup.py)
 urllib3==1.26.2           # via requests
-wheel==0.35.1             # via terraform-manager (setup.py)
+wheel==0.36.1             # via terraform-manager (setup.py)

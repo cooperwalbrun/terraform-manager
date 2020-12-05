@@ -9,7 +9,8 @@ from tabulate import tabulate
 from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.variables import create_variables_template, parse_variables, \
-    _get_existing_variables, _update_variables, _create_variables, configure_variables
+    _get_existing_variables, _update_variables, _create_variables, configure_variables, \
+    delete_variables
 
 from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN, \
     TEST_ORGANIZATION
@@ -28,7 +29,7 @@ _test_variable_api_json: Dict[str, List[Dict[str, Any]]] = {
 _test_variables_with_ids: Dict[str, Variable] = {_test_variable_id: _test_variable}
 
 _test_variables_api_url: str = f"{TEST_API_URL}/workspaces/{_test_workspace.workspace_id}/vars"
-_test_patch_variable_api_url: str = \
+_test_specific_variable_api_url: str = \
     f"{TEST_API_URL}/workspaces/{_test_workspace.workspace_id}/vars/{_test_variable_id}"
 
 
@@ -186,7 +187,7 @@ def test_get_existing_variables_api_error() -> None:
 def test_update_variables() -> None:
     success_mock: Any = MagicMock()
     error_mock: Any = MagicMock()
-    responses.add(responses.PATCH, _test_patch_variable_api_url, status=200)
+    responses.add(responses.PATCH, _test_specific_variable_api_url, status=200)
 
     assert _update_variables(
         TEST_API_URL,
@@ -221,7 +222,7 @@ def test_update_variables_empty_dict() -> None:
 def test_update_variables_api_error() -> None:
     success_mock: Any = MagicMock()
     error_mock: Any = MagicMock()
-    responses.add(responses.PATCH, _test_patch_variable_api_url, status=500)
+    responses.add(responses.PATCH, _test_specific_variable_api_url, status=500)
 
     assert not _update_variables(
         TEST_API_URL,
@@ -332,7 +333,7 @@ def test_configure_variables_report(mocker: MockerFixture) -> None:
             return_value=existing_variables
         )
         responses.add(responses.POST, _test_variables_api_url, status=201)
-        responses.add(responses.PATCH, _test_patch_variable_api_url, status=200)
+        responses.add(responses.PATCH, _test_specific_variable_api_url, status=200)
         print_mock: MagicMock = mocker.patch("builtins.print")
 
         configure_variables(
@@ -343,7 +344,7 @@ def test_configure_variables_report(mocker: MockerFixture) -> None:
             write_output=True
         )
 
-        table_data = [[_test_workspace.name, _test_variable.key, operation, "success", ""]]
+        table_data = [[_test_workspace.name, _test_variable.key, operation, "success", "none"]]
         print_mock.assert_has_calls([
             call((
                 f'Terraform workspace variable configuration results for organization '
@@ -358,3 +359,65 @@ def test_configure_variables_report(mocker: MockerFixture) -> None:
             ),
             call()
         ])
+        assert print_mock.call_count == 4
+
+
+def test_configure_variables_empty_argument() -> None:
+    assert configure_variables(
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        workspaces=[_test_workspace],
+        variables=[],
+        write_output=True
+    )
+
+
+@responses.activate
+def test_delete_variables(mocker: MockerFixture) -> None:
+    for existing_variables in [None, {}, _test_variables_with_ids]:
+        fetch_mock: MagicMock = mocker.patch(
+            "terraform_manager.terraform.variables._get_existing_variables",
+            return_value=existing_variables
+        )
+        responses.add(responses.DELETE, _test_specific_variable_api_url, status=204)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+
+        delete_variables(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION,
+            workspaces=[_test_workspace],
+            variables=[_test_variable.key],
+            write_output=True
+        )
+
+        if existing_variables is None or len(existing_variables) == 0:
+            table_data = []
+        else:
+            table_data = [[_test_workspace.name, _test_variable.key, "delete", "success", "none"]]
+
+        fetch_mock.assert_called_once()
+        print_mock.assert_has_calls([
+            call((
+                f'Terraform workspace variable deletion results for organization '
+                f'"{TEST_ORGANIZATION}" at "{TEST_TERRAFORM_DOMAIN}":'
+            )),
+            call(),
+            call(
+                tabulate(
+                    sorted(table_data, key=lambda x: (x[3], x[2], x[0], x[1])),
+                    headers=["Workspace", "Variable", "Operation", "Status", "Message"]
+                )
+            ),
+            call()
+        ])
+        assert print_mock.call_count == 4
+
+
+def test_delete_variables_empty_argument() -> None:
+    assert delete_variables(
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        workspaces=[_test_workspace],
+        variables=[],
+        write_output=True
+    )

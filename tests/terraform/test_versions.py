@@ -104,6 +104,7 @@ def test_patch_versions(mocker: MockerFixture) -> None:
         call()
     ])
     # yapf: enable
+    assert print_mock.call_count == 4
 
 
 def test_write_version_summary(mocker: MockerFixture) -> None:
@@ -117,6 +118,7 @@ def test_write_version_summary(mocker: MockerFixture) -> None:
         ),
         call()
     ])
+    assert print_mock.call_count == 4
 
 
 def test_write_version_summary_filtered(mocker: MockerFixture) -> None:
@@ -131,6 +133,7 @@ def test_write_version_summary_filtered(mocker: MockerFixture) -> None:
         call(f"{os.linesep}Note: information is only being displayed for certain workspaces."),
         call()
     ])
+    assert print_mock.call_count == 5
 
 
 def test_write_version_summary_single_version(mocker: MockerFixture) -> None:
@@ -144,3 +147,4 @@ def test_write_version_summary_single_version(mocker: MockerFixture) -> None:
         ),
         call()
     ])
+    assert print_mock.call_count == 4

@@ -238,6 +238,85 @@ def _create_variables(
     return all_successful
 
 
+def delete_variables(
+    terraform_domain: str,
+    organization: str,
+    workspaces: List[Workspace],
+    *,
+    variables: List[str],
+    no_tls: bool = False,
+    token: Optional[str] = None,
+    write_output: bool = False
+) -> bool:
+    """
+    Deletes one or more variables for the workspaces. If a variable does not exist in a particular
+    workspace, no operation is performed relative to that variable (this is a safe operation). This
+    behavior allows this method to be idempotent.
+
+    :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
+                             Terraform Cloud or Enterprise).
+    :param organization: The organization containing the workspaces to patch.
+    :param workspaces: The workspaces to patch.
+    :param variables: The keys of the variables to delete.
+    :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
+    :param token: A token suitable for authenticating against the Terraform API. If not specified, a
+                  token will be searched for in the documented locations.
+    :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
+    :return: Whether all HTTP operations were successful. If even a single one failed, returns
+             False.
+    """
+
+    if len(variables) == 0:
+        if write_output:
+            print("No variables to delete - returning successful immediately.")
+        return True
+
+    report = []
+    headers = get_api_headers(terraform_domain, token=token, write_error_messages=write_output)
+    base_url = f"{get_protocol(no_tls)}://{terraform_domain}/api/v2"
+    all_successful = True
+    for workspace in workspaces:
+        existing_variables = _get_existing_variables(
+            base_url, headers, workspace, write_output=write_output
+        )
+        if existing_variables is None:  # Reminder: it will be none if something went wrong
+            all_successful = False
+            continue
+        for variable_id, variable in existing_variables.items():
+            if variable.key in variables:
+                response = safe_http_request(
+                    lambda: throttle(
+                        lambda: requests.delete(
+                            f"{base_url}/workspaces/{workspace.workspace_id}/vars/{variable_id}",
+                            headers=headers
+                        )
+                    )
+                )
+                if response.status_code == 204:
+                    report.append([workspace.name, variable.key, "delete", "success", "none"])
+                else:
+                    all_successful = False
+                    report.append([
+                        workspace.name, variable.key, "delete", "error", response.json()
+                    ])
+
+    if write_output:
+        print((
+            f'Terraform workspace variable deletion results for organization "{organization}" at '
+            f'"{terraform_domain}":'
+        ))
+        print()
+        print(
+            tabulate(
+                sorted(report, key=lambda x: (x[3], x[2], x[0], x[1])),
+                headers=["Workspace", "Variable", "Operation", "Status", "Message"]
+            )
+        )
+        print()
+
+    return all_successful
+
+
 def configure_variables(
     terraform_domain: str,
     organization: str,
@@ -277,7 +356,7 @@ def configure_variables(
         operation = "create" if create else "update"
 
         def callback(v: Variable) -> None:
-            report.append([w.name, v.key, operation, "success", ""])
+            report.append([w.name, v.key, operation, "success", "none"])
 
         return callback
 
@@ -334,7 +413,6 @@ def configure_variables(
             all_successful = update_result
 
     if write_output:
-        print(report)
         print((
             f'Terraform workspace variable configuration results for organization "{organization}" '
             f'at "{terraform_domain}":'

@@ -76,3 +76,4 @@ def test_patch_versions(mocker: MockerFixture) -> None:
         call()
     ])
     # yapf: enable
+    assert print_mock.call_count == 4

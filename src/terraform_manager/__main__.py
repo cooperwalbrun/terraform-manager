@@ -10,7 +10,7 @@ from terraform_manager.terraform.variables import create_variables_template, par
 _parser: ArgumentParser = ArgumentParser(
     description="Manages Terraform workspaces in batch fashion."
 )
-operation_group = _parser.add_mutually_exclusive_group(required=True)
+_operation_group = _parser.add_mutually_exclusive_group(required=True)
 
 _parser.add_argument(
     "-o",
@@ -62,13 +62,13 @@ _parser.add_argument(
     help="Inverts the workspace selection criteria (see --workspaces)."
 )
 
-operation_group.add_argument(
+_operation_group.add_argument(
     "--version-summary",
     action="store_true",
     dest="version_summary",
     help="Summarizes the workspaces' Terraform version information."
 )
-operation_group.add_argument(
+_operation_group.add_argument(
     "--patch-versions",
     type=str,
     metavar="<version>",
@@ -79,34 +79,34 @@ operation_group.add_argument(
         "The program will stop you if the version you specify would cause a downgrade."
     )
 )
-operation_group.add_argument(
+_operation_group.add_argument(
     "--lock",
     "--lock-workspaces",
     action="store_true",
     dest="lock_workspaces",
     help="Locks the workspaces."
 )
-operation_group.add_argument(
+_operation_group.add_argument(
     "--unlock",
     "--unlock-workspaces",
     action="store_true",
     dest="unlock_workspaces",
     help="Unlocks the workspaces."
 )
-operation_group.add_argument(
+_operation_group.add_argument(
     "--working-dir",
     type=str,
     metavar="<directory>",
     dest="working_directory",
     help="Sets the workspaces' working directories to the value provided."
 )
-operation_group.add_argument(
+_operation_group.add_argument(
     "--clear-working-dir",
     action="store_true",
     dest="clear_working_directory",
     help="Clears the workspaces' working directories."
 )
-operation_group.add_argument(
+_operation_group.add_argument(
     "--create-vars-template",
     action="store_true",
     dest="create_variables_template",
@@ -115,15 +115,23 @@ operation_group.add_argument(
         "flag in the current directory."
     )
 )
-operation_group.add_argument(
+_operation_group.add_argument(
     "--configure-vars",
     type=str,
     metavar="<variables file>",
     dest="configure_variables",
     help=(
-        "Creates/updates the variables specified in the given file in the workspaces. See "
+        "Creates/updates the variables specified in the given file in the workspaces. See also "
         "--create-vars-template."
     )
+)
+_operation_group.add_argument(
+    "--delete-vars",
+    type=str,
+    metavar="<key>",
+    nargs="+",
+    dest="delete_variables",
+    help="Deletes the variables specified by-key in the workspaces."
 )
 
 
@@ -243,6 +251,17 @@ def organization_required_main(argument_dictionary: Dict[str, Any]) -> None:
                 if not total_success:
                     # There is no need to write any error messages because a report is written by
                     # the configure_variables method
+                    fail()
+        elif argument_dictionary.get("delete_variables") is not None:
+            variables_to_delete: List[str] = argument_dictionary["delete_variables"]
+            if len(variables_to_delete) == 0:
+                print(f"Error: no variables specified for deletion.", file=sys.stderr)
+                fail()
+            else:
+                total_success = terraform.delete_variables(variables_to_delete)
+                if not total_success:
+                    # There is no need to write any error messages because a report is written by
+                    # the delete_variables method
                     fail()
         # We do not have to have an "else" because argparse should make fallthrough impossible
 
