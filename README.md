@@ -157,7 +157,7 @@ you may issue the following:
 terraform-manager --create-vars-template
 ```
 
-Note the absence of workspace selection arguments such as organization. This is a special operation
+Note the absence of workspace selection arguments, such as organization. This is a special operation
 that takes no other arguments, and it does not interact with the Terraform API at all. After you
 configure a JSON file (with a location and name of your choosing), you may pass it to the
 `--configure-vars` argument like so:

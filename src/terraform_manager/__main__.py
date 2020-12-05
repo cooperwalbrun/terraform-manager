@@ -9,29 +9,31 @@ from terraform_manager.terraform import CLOUD_DOMAIN
 _parser: ArgumentParser = ArgumentParser(
     description="Manages Terraform workspaces in batch fashion."
 )
-_operation_group = _parser.add_mutually_exclusive_group(required=True)
+_selection_group = _parser.add_argument_group()
+_operation_group = _selection_group.add_mutually_exclusive_group(required=False)
+_special_group = _parser.add_mutually_exclusive_group(required=False)
 
-_parser.add_argument(
+_selection_group.add_argument(
     "-o",
     "--organization",
     type=str,
-    metavar="<organization>",
+    metavar="ORGANIZATION",
     dest="organization",
     help="The name of the organization to target within your Terraform installation (see --domain)."
 )
-_parser.add_argument(
+_selection_group.add_argument(
     "--domain",  # We do not alias this with "-d" to avoid confusion around "-d" meaning "delete"
     type=str,
-    metavar="<domain>",
+    metavar="DOMAIN",
     dest="domain",
     help=(
         "The domain of your Terraform Enterprise installation. If not specified, Terraform Cloud's "
         "domain will be used."
     )
 )
-_parser.add_argument(
-    "--no-ssl",
+_selection_group.add_argument(
     "--no-tls",
+    "--no-ssl",
     action="store_true",
     dest="no_tls",
     help=(
@@ -40,12 +42,11 @@ _parser.add_argument(
         "does not have SSL/TLS enabled."
     )
 )
-
-_parser.add_argument(
+_selection_group.add_argument(
     "-w",
     "--workspaces",
     type=str,
-    metavar="<workspace>",
+    metavar="WORKSPACE",
     nargs="+",
     dest="workspaces",
     help=(
@@ -53,7 +54,7 @@ _parser.add_argument(
         "specified, all workspaces will be automatically discovered and targeted)."
     )
 )
-_parser.add_argument(
+_selection_group.add_argument(
     "-b",
     "--blacklist",
     action="store_true",
@@ -70,7 +71,7 @@ _operation_group.add_argument(
 _operation_group.add_argument(
     "--patch-versions",
     type=str,
-    metavar="<version>",
+    metavar="VERSION",
     dest="patch_versions",
     help=(
         "Sets the workspaces' Terraform versions to the value provided. This can only be used to "
@@ -95,7 +96,7 @@ _operation_group.add_argument(
 _operation_group.add_argument(
     "--working-dir",
     type=str,
-    metavar="<directory>",
+    metavar="DIRECTORY",
     dest="working_directory",
     help="Sets the workspaces' working directories to the value provided."
 )
@@ -106,18 +107,9 @@ _operation_group.add_argument(
     help="Clears the workspaces' working directories."
 )
 _operation_group.add_argument(
-    "--create-vars-template",
-    action="store_true",
-    dest="create_variables_template",
-    help=(
-        "Creates a template JSON file suitable for configuring variables via the --configure-vars "
-        "flag in the current directory."
-    )
-)
-_operation_group.add_argument(
     "--configure-vars",
     type=str,
-    metavar="<variables file>",
+    metavar="FILE",
     dest="configure_variables",
     help=(
         "Creates/updates the variables specified in the given file in the workspaces. See also "
@@ -127,26 +119,70 @@ _operation_group.add_argument(
 _operation_group.add_argument(
     "--delete-vars",
     type=str,
-    metavar="<key>",
+    metavar="KEY",
     nargs="+",
     dest="delete_variables",
     help="Deletes the variables specified by-key in the workspaces."
 )
 
+_special_group.add_argument(
+    "--create-vars-template",
+    action="store_true",
+    dest="create_variables_template",
+    help=(
+        "Creates a template JSON file suitable for configuring variables via the --configure-vars "
+        "flag in the current directory."
+    )
+)
 
-def parse_arguments(arguments: List[str]) -> Dict[str, Any]:
+
+def _get_arguments() -> List[str]:  # pragma: no cover
+    # This logic is extracted into its own method for unit test mocking purposes
+    return sys.argv[1:]
+
+
+def _parse_arguments(arguments: List[str]) -> Dict[str, Any]:
     arguments: Namespace = _parser.parse_args(arguments)
     return vars(arguments)
 
 
-def no_required_arguments_main(argument_dictionary: Dict[str, Any]) -> None:
-    if argument_dictionary["create_variables_template"]:
+def _get_selection_argument(arguments: List[str]) -> Optional[str]:  # pragma: no cover
+    flags = [
+        "-o",
+        "--organization",
+        "--domain",
+        "--no-tls",
+        "--no-ssl"
+        "-w",
+        "--workspaces",
+        "-b",
+        "--blacklist"
+    ]
+    for flag in flags:
+        if flag in arguments:
+            return flag
+    return None
+
+
+def _get_special_argument(arguments: List[str]) -> Optional[str]:  # pragma: no cover
+    flags = ["--create-vars-template"]
+    for flag in flags:
+        if flag in arguments:
+            return flag
+    return None
+
+
+def _no_selection_arguments_main(arguments: Dict[str, Any]) -> None:
+    if arguments["create_variables_template"]:
         cli_handlers.create_variables_template()
 
 
-def organization_required_main(arguments: Dict[str, Any]) -> None:
+def _organization_required_main(arguments: Dict[str, Any]) -> None:
     organization: str = arguments["organization"]
-    domain: Optional[str] = arguments.get("domain", CLOUD_DOMAIN).lower()
+    if arguments.get("domain") is None:
+        domain: str = CLOUD_DOMAIN
+    else:
+        domain: str = arguments["domain"].lower()
     workspaces_to_target: Optional[List[str]] = arguments.get("workspaces")
     blacklist: bool = arguments["blacklist"]
     no_tls: bool = arguments["no_tls"]
@@ -175,21 +211,27 @@ def organization_required_main(arguments: Dict[str, Any]) -> None:
     elif arguments.get("delete_variables") is not None:
         cli_handlers.delete_variables(terraform, arguments["delete_variables"])
     else:
-        # We do not technically need this "else" block because argparse should make fallthrough
-        # impossible, but it is better to be safe than sorry
-        cli_handlers.fail()
+        _parser.error("Unable to determine which operation you are attempting to perform.")
 
 
 def main() -> None:
-    arguments = parse_arguments(sys.argv[1:])
+    args = _get_arguments()
 
-    if arguments["create_variables_template"]:
-        no_required_arguments_main(arguments)
-    elif "organization" not in arguments:
-        print("Error: you must specify an organization to target.", file=sys.stderr)
-        cli_handlers.fail()
+    if len(args) == 0:
+        _parser.error("You must specify at least one argument.")
+    elif _get_selection_argument(args) is not None and _get_special_argument(args) is not None:
+        _parser.error((
+            f"You cannot specify any selection arguments (such as {_get_selection_argument(args)}) "
+            f"at the same time as {_get_special_argument(args)}."
+        ))
     else:
-        organization_required_main(arguments)
+        arguments = _parse_arguments(args)
+        if arguments["create_variables_template"]:
+            _no_selection_arguments_main(arguments)
+        elif "organization" not in arguments:
+            _parser.error("You must specify an organization to target.")
+        else:
+            _organization_required_main(arguments)
 
 
 if __name__ == "__main__":

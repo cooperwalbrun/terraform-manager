@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Reorganized CLI operations and started using the new `configuration_is_valid()` method to check CLI parameters (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Updated the argument parser for the CLI to function in a way more consistent with the documentation (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ## 0.4.1 - 2020-12-05
 
