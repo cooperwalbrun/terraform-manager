@@ -41,6 +41,9 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Bulk update the Terraform version of selected workspaces
     * Bulk update the working directory of selected workspaces
     * Bulk update/create/delete variables of selected workspaces (with idempotency)
+* Designed with security in mind:
+    * The Python API of this module has built-in validation to prevent unsafe/invalid HTTP requests to the Terraform API
+    * `terraform-manager` will never leak your Terraform token to the console, even if an error occurs
 
 ## Installation
 
