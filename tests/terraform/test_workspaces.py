@@ -20,7 +20,8 @@ _test_json = {
             "name": _test_workspace1.name,
             "terraform-version": _test_workspace1.terraform_version,
             "locked": _test_workspace1.is_locked,
-            "working-directory": _test_workspace1.working_directory
+            "working-directory": _test_workspace1.working_directory,
+            "execution-mode": _test_workspace1.execution_mode
         }
     }, {
         "id": _test_workspace2.workspace_id,
@@ -29,7 +30,8 @@ _test_json = {
             "name": _test_workspace2.name,
             "terraform-version": _test_workspace2.terraform_version,
             "locked": _test_workspace2.is_locked,
-            "working-directory": _test_workspace2.working_directory
+            "working-directory": _test_workspace2.working_directory,
+            "execution-mode": _test_workspace2.execution_mode
         }
     }]
 }

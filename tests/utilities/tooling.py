@@ -10,7 +10,10 @@ TEST_API_URL: str = f"https://{TEST_TERRAFORM_DOMAIN}/api/v2"
 
 
 def test_workspace(
-    version: str = "0.13.1", locked: bool = False, working_directory: str = ""
+    version: str = "0.13.1",
+    locked: bool = False,
+    working_directory: str = "",
+    execution_mode: str = "remote"
 ) -> Workspace:
     letters = string.ascii_lowercase
     return Workspace(
@@ -19,5 +22,6 @@ def test_workspace(
         version,
         False,
         locked,
-        working_directory
+        working_directory,
+        execution_mode
     )

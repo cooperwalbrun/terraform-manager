@@ -409,6 +409,29 @@ def test_clear_working_directories(mocker: MockerFixture) -> None:
     fail_mock.assert_not_called()
 
 
+def test_patch_execution_modes(mocker: MockerFixture) -> None:
+    for success in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        working_directory_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.set_execution_modes",
+            return_value=success
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+
+        desired_execution_mode = "remote"
+        _mock_parsed_arguments(mocker, _arguments({"execution_mode": desired_execution_mode}))
+        _mock_get_group_arguments(mocker)
+
+        main()
+
+        working_directory_mock.assert_called_once_with(desired_execution_mode)
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()
+
+
 def test_create_variables_template(mocker: MockerFixture) -> None:
     _mock_sys_argv_arguments(mocker)
     fail_mock: MagicMock = _mock_cli_fail(mocker)

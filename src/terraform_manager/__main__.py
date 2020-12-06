@@ -117,6 +117,16 @@ _operation_group.add_argument(
     help="Clears the workspaces' working directories."
 )
 _operation_group.add_argument(
+    "--execution-mode",
+    type=str,
+    metavar="MODE",
+    dest="execution_mode",
+    help=(
+        "Sets the workspaces' execution modes to the value provided. MODE must be either "
+        '"remote", "local", or "agent" (case-sensitive).'
+    )
+)
+_operation_group.add_argument(
     "--configure-vars",
     type=str,
     metavar="FILE",
@@ -219,6 +229,8 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         cli_handlers.lock_or_unlock_workspaces(terraform, arguments["lock_workspaces"])
     elif arguments.get("working_directory") is not None or arguments["clear_working_directory"]:
         cli_handlers.set_working_directories(terraform, arguments.get("working_directory"))
+    elif arguments.get("execution_mode") is not None:
+        cli_handlers.set_execution_modes(terraform, arguments["execution_mode"])
     elif arguments.get("configure_variables") is not None:
         cli_handlers.configure_variables(terraform, arguments["configure_variables"])
     elif arguments.get("delete_variables") is not None:

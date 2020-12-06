@@ -7,9 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Nothing currently!
+
+## 0.4.3 - 2020-12-06
+
 ### Added
 
 * Added an optional `-s` CLI flag to tell `terraform-manager` to suppress all output (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Added functionality for the `--execution-mode` operation (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Changed
+
+* All operations' reports will now write messages indicating that nothing changed when applicable (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ## 0.4.2 - 2020-12-05
 
