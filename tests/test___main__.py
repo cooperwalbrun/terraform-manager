@@ -81,24 +81,38 @@ def test_no_arguments(mocker: MockerFixture) -> None:
 
 
 def test_selection_operation_without_organization(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
-    _mock_parsed_arguments(mocker, {**_bool_flags, "blacklist": True})
-    _mock_get_group_arguments(mocker)
-    main()
-    parser_mock.assert_called_once_with("You must specify an organization to target.")
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        parser_fail_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser_fail")
+        parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
+        _mock_parsed_arguments(mocker, {**_bool_flags, "silent": silent, "blacklist": True})
+        _mock_get_group_arguments(mocker)
+        main()
+        if silent:
+            parser_mock.assert_not_called()
+            parser_fail_mock.assert_called_once()
+        else:
+            parser_mock.assert_called_once_with("You must specify an organization to target.")
+            parser_fail_mock.assert_not_called()
 
 
 def test_selection_criteria_without_operation(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_parsed_arguments(mocker, _arguments())
-    _mock_get_group_arguments(mocker)
-    main()
-    parser_mock.assert_called_once_with(
-        "Unable to determine which operation you are attempting to perform."
-    )
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        parser_fail_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser_fail")
+        parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+        _mock_parsed_arguments(mocker, _arguments({"silent": silent}))
+        _mock_get_group_arguments(mocker)
+        main()
+        if silent:
+            parser_mock.assert_not_called()
+            parser_fail_mock.assert_called_once()
+        else:
+            parser_mock.assert_called_once_with(
+                "Unable to determine which operation you are attempting to perform."
+            )
+            parser_fail_mock.assert_not_called()
 
 
 def test_incompatible_argument_groups(mocker: MockerFixture) -> None:

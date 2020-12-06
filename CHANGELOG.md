@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-Nothing currently!
+### Fixed
+
+* Parser-oriented errors will now respect the presence of the `-s` flag on the CLI (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ## 0.4.3 - 2020-12-06
 
