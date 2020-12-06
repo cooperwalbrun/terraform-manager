@@ -4,6 +4,7 @@ from typing import Optional, List
 from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import CLOUD_DOMAIN
+from terraform_manager.terraform.execution_modes import patch_execution_modes
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 from terraform_manager.terraform.variables import configure_variables, delete_variables
 from terraform_manager.terraform.versions import check_versions, patch_versions, \
@@ -207,6 +208,25 @@ class Terraform:
             self.organization,
             self.workspaces,
             new_working_directory=new_working_directory,
+            no_tls=self.no_tls,
+            token=self.token,
+            write_output=self.write_output
+        )
+
+    def set_execution_modes(self, new_execution_mode: str) -> bool:
+        """
+        Patches the execution modes of the workspaces.
+
+        :param new_execution_mode: The new execution mode to assign to the workspaces. The value
+                                   must be either "remote", "local", or "agent" (case-sensitive).
+        :return: Whether all patch operations were successful. If even a single one failed, returns
+                 False.
+        """
+        return patch_execution_modes(
+            self.terraform_domain,
+            self.organization,
+            self.workspaces,
+            new_execution_mode=new_execution_mode,
             no_tls=self.no_tls,
             token=self.token,
             write_output=self.write_output

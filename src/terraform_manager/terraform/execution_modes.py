@@ -1,4 +1,5 @@
-from typing import List, Union, Optional
+import sys
+from typing import List, Optional, Union
 
 from requests import Response
 from tabulate import tabulate
@@ -7,24 +8,25 @@ from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform.workspaces import batch_operation
 
 
-def patch_working_directories(
+def patch_execution_modes(
     terraform_domain: str,
     organization: str,
     workspaces: List[Workspace],
     *,
-    new_working_directory: Optional[str],
+    new_execution_mode: str,
     no_tls: bool = False,
     token: Optional[str] = None,
     write_output: bool = False
 ) -> bool:
     """
-    Patches the working directories of the workspaces.
+    Patches the execution modes of the workspaces.
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
     :param organization: The organization containing the workspaces to patch.
     :param workspaces: The workspaces to patch.
-    :param new_working_directory: The new working directory to assign to the workspaces.
+    :param new_execution_mode: The new execution mode to assign to the workspaces. The value must be
+                               either "remote", "local", or "agent" (case-sensitive).
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param token: A token suitable for authenticating against the Terraform API. If not specified, a
                   token will be searched for in the documented locations.
@@ -33,45 +35,33 @@ def patch_working_directories(
              False.
     """
 
-    json = {
-        "data": {
-            "type": "workspaces",
-            "attributes": {
-                "working-directory": "" if new_working_directory is None else new_working_directory
-            }
-        }
-    }
+    if new_execution_mode not in ["remote", "local", "agent"]:
+        if write_output:
+            print(f"Error: invalid execution-mode specified: {new_execution_mode}", file=sys.stderr)
+        return False
+
+    json = {"data": {"type": "workspaces", "attributes": {"execution-mode": new_execution_mode}}}
     report = []
 
-    def coalesce(working_directory: Optional[str]) -> str:
-        if working_directory is None or len(working_directory) == 0:
-            return "<none>"
-        else:
-            return working_directory
-
     def on_success(workspace: Workspace) -> None:
-        if coalesce(workspace.working_directory) == coalesce(new_working_directory):
+        if workspace.execution_mode == new_execution_mode:
             report.append([
                 workspace.name,
-                coalesce(workspace.working_directory),
-                coalesce(new_working_directory),
+                workspace.execution_mode,
+                new_execution_mode,
                 "success",
-                "working directory unchanged"
+                "execution mode unchanged"
             ])
         else:
             report.append([
-                workspace.name,
-                coalesce(workspace.working_directory),
-                coalesce(new_working_directory),
-                "success",
-                "none"
+                workspace.name, workspace.execution_mode, new_execution_mode, "success", "none"
             ])
 
     def on_failure(workspace: Workspace, response: Union[Response, ErrorResponse]) -> None:
         report.append([
             workspace.name,
-            coalesce(workspace.working_directory),
-            coalesce(workspace.working_directory),
+            workspace.execution_mode,
+            workspace.execution_mode,
             "error",
             response.json()
         ])
@@ -89,8 +79,8 @@ def patch_working_directories(
 
     if write_output:
         print((
-            f'Terraform workspace working directory patch results for organization '
-            f'"{organization}" at "{terraform_domain}":'
+            f'Terraform workspace execution mode patch results for organization "{organization}" '
+            f'at "{terraform_domain}":'
         ))
         print()
         print(
@@ -98,8 +88,8 @@ def patch_working_directories(
                 sorted(report, key=lambda x: (x[3], x[0])),
                 headers=[
                     "Workspace",
-                    "Working Directory Before",
-                    "Working Directory After",
+                    "Execution Mode Before",
+                    "Execution Mode After",
                     "Status",
                     "Message"
                 ]

@@ -44,6 +44,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Bulk lock or unlock selected workspaces
     * Bulk update the Terraform version of selected workspaces
     * Bulk update the working directory of selected workspaces
+    * Bulk update the execution mode of selected workspaces
     * Bulk update/create/delete variables of selected workspaces (with idempotency)
 * Designed with security in mind:
     * The Python API of this module has built-in validation to prevent unsafe/invalid HTTP requests to the Terraform API
@@ -159,6 +160,9 @@ terraform-manager -o example123 --working-dir dev
 # Set working directories to empty and write a report to STDOUT
 terraform-manager -o example123 --clear-working-dir
 
+# Set the execution mode to "local" and write a report to STDOUT
+terraform-manager -o example123 --execution-mode local
+
 # Delete variables with keys "some-key" and "other-key"
 terraform-manager -o example123 --delete-vars some-key other-key
 ```
@@ -207,13 +211,13 @@ terraform = Terraform("something.mycompany.com", "example123")
 terraform = Terraform("something.mycompany.com", "example123", no_tls=True)
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
-terraform = Terraform("app.terraform.io", "example123", workspaces=["workspace1", "workspace2"])
+terraform = Terraform("app.terraform.io", "example123", workspace_names=["workspace1", "workspace2"])
 
 # Select workspaces that begin with "aws" (case-insensitive)
-terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"])
+terraform = Terraform("app.terraform.io", "example123", workspace_names=["aws*"])
 
 # Select workspaces that do NOT begin with "aws" (case-insensitive)
-terraform = Terraform("app.terraform.io", "example123", workspaces=["aws*"], blacklist=True)
+terraform = Terraform("app.terraform.io", "example123", workspace_names=["aws*"], blacklist=True)
 ```
 
 After constructing an instance of `Terraform`, you can optionally validate the arguments that you
@@ -257,6 +261,9 @@ success = terraform.set_working_directories("dev")
 
 # Set working directories to empty
 success = terraform.set_working_directories(None)
+
+# Set the execution mode to "local"
+success = terraform.set_execution_modes("local")
 
 # Configure variables (first create a list of one or more variable objects, then configure them)
 variables = [

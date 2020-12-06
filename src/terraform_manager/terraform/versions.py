@@ -80,7 +80,18 @@ def patch_versions(
     report = []
 
     def on_success(workspace: Workspace) -> None:
-        report.append([workspace.name, workspace.terraform_version, new_version, "success", "none"])
+        if workspace.terraform_version == new_version:
+            report.append([
+                workspace.name,
+                workspace.terraform_version,
+                new_version,
+                "success",
+                "version unchanged"
+            ])
+        else:
+            report.append([
+                workspace.name, workspace.terraform_version, new_version, "success", "none"
+            ])
 
     def on_failure(workspace: Workspace, response: Union[Response, ErrorResponse]) -> None:
         report.append([

@@ -9,8 +9,8 @@ from terraform_manager.terraform.variables import parse_variables
 
 def _fallible(operation: bool) -> None:
     if not operation:
-        # There is no need to write any error messages because a report should be written by the
-        # "operation"
+        # There is no need to write any error messages because a report and/or status messages
+        # should be written by the "operation"
         fail()
 
 
@@ -68,6 +68,10 @@ def lock_or_unlock_workspaces(terraform: Terraform, lock: bool) -> None:
 
 def set_working_directories(terraform: Terraform, working_directory: Optional[str]) -> None:
     _fallible(terraform.set_working_directories(working_directory))
+
+
+def set_execution_modes(terraform: Terraform, execution_mode: str) -> None:
+    _fallible(terraform.set_execution_modes(execution_mode))
 
 
 def configure_variables(terraform: Terraform, file: str) -> None:

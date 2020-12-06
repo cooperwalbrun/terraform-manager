@@ -47,64 +47,61 @@ def test_check_versions() -> None:
     assert check_versions(_workspaces, "0.13.8")
 
 
-def _establish_mocks(mocker: MockerFixture) -> None:
-    mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
-
-
 @responses.activate
 def test_patch_versions(mocker: MockerFixture) -> None:
-    _establish_mocks(mocker)
-    print_mock: MagicMock = mocker.patch("builtins.print")
-    test_version = "0.13.5"
-    error_json = {"data": {"id": _0_13_5.workspace_id}}
-    responses.add(
-        responses.PATCH, f"{TEST_API_URL}/workspaces/{_0_13_1_first.workspace_id}", status=200
-    )
-    responses.add(
-        responses.PATCH,
-        f"{TEST_API_URL}/workspaces/{_0_13_5.workspace_id}",
-        json=error_json,
-        status=500
-    )
-    assert not patch_versions(
-        TEST_TERRAFORM_DOMAIN,
-        TEST_ORGANIZATION, [_0_13_1_first, _0_13_5],
-        new_version=test_version,
-        write_output=True
-    )
-    # yapf: disable
-    print_mock.assert_has_calls([
-        call((
-            f'Terraform workspace version patch results for organization "{TEST_ORGANIZATION}" at '
-            f'"{TEST_TERRAFORM_DOMAIN}":'
-        )),
-        call(),
-        call(
-            tabulate(
-                [
+    for test in [_0_13_1_first.terraform_version, "0.13.5"]:
+        mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        error_json = {"data": {"id": _0_13_1_second.workspace_id}}
+        responses.add(
+            responses.PATCH, f"{TEST_API_URL}/workspaces/{_0_13_1_first.workspace_id}", status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f"{TEST_API_URL}/workspaces/{_0_13_1_second.workspace_id}",
+            json=error_json,
+            status=500
+        )
+        assert not patch_versions(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION, [_0_13_1_first, _0_13_1_second],
+            new_version=test,
+            write_output=True
+        )
+        # yapf: disable
+        print_mock.assert_has_calls([
+            call((
+                f'Terraform workspace version patch results for organization "{TEST_ORGANIZATION}" '
+                f'at "{TEST_TERRAFORM_DOMAIN}":'
+            )),
+            call(),
+            call(
+                tabulate(
                     [
-                        _0_13_5.name,
-                        _0_13_5.terraform_version,
-                        _0_13_5.terraform_version,
-                        "error",
-                        str(error_json)
+                        [
+                            _0_13_1_second.name,
+                            _0_13_1_second.terraform_version,
+                            _0_13_1_second.terraform_version,
+                            "error",
+                            str(error_json)
+                        ],
+                        [
+                            _0_13_1_first.name,
+                            _0_13_1_first.terraform_version,
+                            test,
+                            "success",
+                            "none" if test != _0_13_1_first.terraform_version
+                            else "version unchanged"
+                        ]
                     ],
-                    [
-                        _0_13_1_first.name,
-                        _0_13_1_first.terraform_version,
-                        test_version,
-                        "success",
-                        "none"
-                    ]
-                ],
-                headers=["Workspace", "Version Before", "Version After", "Status", "Message"],
-                colalign=("left", "right", "right"))
+                    headers=["Workspace", "Version Before", "Version After", "Status", "Message"],
+                    colalign=("left", "right", "right"))
 
-        ),
-        call()
-    ])
-    # yapf: enable
-    assert print_mock.call_count == 4
+            ),
+            call()
+        ])
+        # yapf: enable
+        assert print_mock.call_count == 4
 
 
 def test_write_version_summary(mocker: MockerFixture) -> None:
