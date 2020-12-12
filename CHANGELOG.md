@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Nothing currently!
+
+## v0.5.0 - 2020-12-12
+
 ### Added
 
 * Added functionality for the `--enable-auto-apply`/`--disable-auto-apply` operations (by [@cooperwalbrun](https://github.com/cooperwalbrun))
