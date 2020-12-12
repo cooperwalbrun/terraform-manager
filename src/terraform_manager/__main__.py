@@ -139,6 +139,18 @@ _operation_group.add_argument(
     help="Disables auto-apply on the workspaces."
 )
 _operation_group.add_argument(
+    "--enable-speculative",
+    action="store_true",
+    dest="enable_speculative",
+    help="Enables speculative runs on the workspaces."
+)
+_operation_group.add_argument(
+    "--disable-speculative",
+    action="store_true",
+    dest="disable_speculative",
+    help="Disables speculative runs on the workspaces."
+)
+_operation_group.add_argument(
     "--configure-vars",
     type=str,
     metavar="FILE",
@@ -266,6 +278,8 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         cli_handlers.delete_variables(terraform, arguments["delete_variables"])
     elif arguments["enable_auto_apply"] or arguments["disable_auto_apply"]:
         cli_handlers.set_auto_apply(terraform, arguments["enable_auto_apply"])
+    elif arguments["enable_speculative"] or arguments["disable_speculative"]:
+        cli_handlers.set_speculative(terraform, arguments["enable_speculative"])
     else:
         if silent:
             _parser_fail()

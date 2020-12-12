@@ -16,7 +16,13 @@ A = TypeVar("A")
 
 def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
     required_attributes = [
-        "name", "terraform-version", "auto-apply", "locked", "working-directory", "execution-mode"
+        "name",
+        "terraform-version",
+        "auto-apply",
+        "locked",
+        "working-directory",
+        "execution-mode",
+        "speculative-enabled"
     ]
 
     def is_valid(json_object: Dict[str, Any]) -> bool:
@@ -39,7 +45,8 @@ def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
                     json_object["attributes"]["auto-apply"],
                     json_object["attributes"]["locked"],
                     json_object["attributes"]["working-directory"],
-                    json_object["attributes"]["execution-mode"]
+                    json_object["attributes"]["execution-mode"],
+                    json_object["attributes"]["speculative-enabled"]
                 )
             )
     return workspaces

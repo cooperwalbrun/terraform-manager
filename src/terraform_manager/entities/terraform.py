@@ -281,6 +281,26 @@ class Terraform:
             write_output=self.write_output
         )
 
+    def set_speculative(self, set_speculative: bool) -> bool:
+        """
+        Patches the speculative-enabled setting of the workspaces.
+
+        :param set_speculative: The desired value of the workspaces' speculative-enabled setting.
+        :return: Whether all patch operations were successful. If even a single one failed, returns
+                 False.
+        """
+        return batch_operation(
+            self.terraform_domain,
+            self.organization,
+            self.workspaces,
+            field_mapper=lambda w: w.speculative,
+            field_name="speculative-enabled",
+            new_value=set_speculative,
+            no_tls=self.no_tls,
+            token=self.token,
+            write_output=self.write_output
+        )
+
     def delete_variables(self, variables: List[str]) -> bool:
         """
         Deletes one or more variables for the workspaces. If a variable does not exist in a
