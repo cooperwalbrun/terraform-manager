@@ -42,17 +42,19 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Numerous operations available:
     * View a high-level Terraform version summary of selected workspaces
     * Bulk lock or unlock selected workspaces
-    * Bulk update the Terraform version of selected workspaces
-    * Bulk update the working directory of selected workspaces
-    * Bulk update the execution mode of selected workspaces
     * Bulk update/create/delete variables of selected workspaces (with idempotency)
+    * Bulk update settings of selected workspaces:
+        * Terraform version
+        * Working directory
+        * Execution mode
+        * Auto-apply
 * Designed with security in mind:
     * The Python API of this module has built-in validation to prevent unsafe/invalid HTTP requests to the Terraform API
     * `terraform-manager` will never leak your Terraform token to the console, even if an error occurs
 
 ### Limitations
 
-* Due to the rate-limiting restrictions imposed by the Terraform API, this module currently does not
+* Due to the rate-limiting restrictions imposed by the Terraform API, this module does not
   officially support execution in a multi-threaded fashion (the rate limit is enforced by blocking
   on the current thread)
 * `terraform-helper` is only tested against Python 3.6, 3.7, 3.8, and 3.9, so these are the only
@@ -143,10 +145,10 @@ terraform-manager -o example123 -w aws* -b <operation>
 terraform-manager -o example123 --version-summary
 
 # Upgrade workspace versions to 0.13.5 and write a report to STDOUT
-terraform-manager -o example123 --patch-versions 0.13.5
+terraform-manager -o example123 --terraform-version 0.13.5
 
 # Upgrade workspace versions to 0.13.5 and suppress all output (the -s flag works with all operations)
-terraform-manager -o example123 --patch-versions 0.13.5 -s
+terraform-manager -o example123 --terraform-version 0.13.5 -s
 
 # Lock workspaces and write a report to STDOUT
 terraform-manager -o example123 --lock
@@ -162,6 +164,12 @@ terraform-manager -o example123 --clear-working-dir
 
 # Set the execution mode to "local" and write a report to STDOUT
 terraform-manager -o example123 --execution-mode local
+
+# Enable auto-apply and write a report to STDOUT
+terraform-manager -o example123 --enable-auto-apply
+
+# Disable auto-apply and write a report to STDOUT
+terraform-manager -o example123 --disable-auto-apply
 
 # Delete variables with keys "some-key" and "other-key"
 terraform-manager -o example123 --delete-vars some-key other-key
@@ -248,7 +256,7 @@ from terraform_manager.entities.variable import Variable
 terraform = Terraform(...)
 
 # Upgrade workspace versions to 0.13.5
-success = terraform.patch_versions("0.13.5")
+success = terraform.set_versions("0.13.5")
 
 # Lock workspaces
 success = terraform.lock_workspaces()
@@ -264,6 +272,12 @@ success = terraform.set_working_directories(None)
 
 # Set the execution mode to "local"
 success = terraform.set_execution_modes("local")
+
+# Enable auto-apply
+success = terraform.set_auto_apply(True)
+
+# Disable auto-apply
+success = terraform.set_auto_apply(False)
 
 # Configure variables (first create a list of one or more variable objects, then configure them)
 variables = [

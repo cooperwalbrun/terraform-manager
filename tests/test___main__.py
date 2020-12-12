@@ -22,7 +22,9 @@ _bool_flags: Dict[str, bool] = {
     "lock_workspaces": False,
     "unlock_workspaces": False,
     "clear_working_directory": False,
-    "create_variables_template": False
+    "create_variables_template": False,
+    "enable_auto_apply": False,
+    "disable_auto_apply": False
 }
 
 
@@ -81,24 +83,38 @@ def test_no_arguments(mocker: MockerFixture) -> None:
 
 
 def test_selection_operation_without_organization(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
-    _mock_parsed_arguments(mocker, {**_bool_flags, "blacklist": True})
-    _mock_get_group_arguments(mocker)
-    main()
-    parser_mock.assert_called_once_with("You must specify an organization to target.")
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        parser_fail_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser_fail")
+        parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
+        _mock_parsed_arguments(mocker, {**_bool_flags, "silent": silent, "blacklist": True})
+        _mock_get_group_arguments(mocker)
+        main()
+        if silent:
+            parser_mock.assert_not_called()
+            parser_fail_mock.assert_called_once()
+        else:
+            parser_mock.assert_called_once_with("You must specify an organization to target.")
+            parser_fail_mock.assert_not_called()
 
 
 def test_selection_criteria_without_operation(mocker: MockerFixture) -> None:
-    _mock_sys_argv_arguments(mocker)
-    parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
-    _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_parsed_arguments(mocker, _arguments())
-    _mock_get_group_arguments(mocker)
-    main()
-    parser_mock.assert_called_once_with(
-        "Unable to determine which operation you are attempting to perform."
-    )
+    for silent in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        parser_fail_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser_fail")
+        parser_mock: MagicMock = mocker.patch("terraform_manager.__main__._parser.error")
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+        _mock_parsed_arguments(mocker, _arguments({"silent": silent}))
+        _mock_get_group_arguments(mocker)
+        main()
+        if silent:
+            parser_mock.assert_not_called()
+            parser_fail_mock.assert_called_once()
+        else:
+            parser_mock.assert_called_once_with(
+                "Unable to determine which operation you are attempting to perform."
+            )
+            parser_fail_mock.assert_not_called()
 
 
 def test_incompatible_argument_groups(mocker: MockerFixture) -> None:
@@ -240,24 +256,20 @@ def test_version_summary(mocker: MockerFixture) -> None:
     fail_mock.assert_not_called()
 
 
-def test_patch_versions(mocker: MockerFixture) -> None:
+def test_set_versions(mocker: MockerFixture) -> None:
     for success in [True, False]:
         _mock_sys_argv_arguments(mocker)
         fail_mock: MagicMock = _mock_cli_fail(mocker)
-        check_mock: MagicMock = mocker.patch(
-            "terraform_manager.entities.terraform.Terraform.check_versions", return_value=True
-        )
         patch_mock: MagicMock = mocker.patch(
-            "terraform_manager.entities.terraform.Terraform.patch_versions", return_value=success
+            "terraform_manager.entities.terraform.Terraform.set_versions", return_value=success
         )
         desired_version = "0.13.5"
         _mock_fetch_workspaces(mocker, [_test_workspace1])
-        _mock_parsed_arguments(mocker, _arguments({"patch_versions": desired_version}))
+        _mock_parsed_arguments(mocker, _arguments({"terraform_version": desired_version}))
         _mock_get_group_arguments(mocker)
 
         main()
 
-        check_mock.assert_called_once_with(desired_version)
         patch_mock.assert_called_once_with(desired_version)
         if success:
             fail_mock.assert_not_called()
@@ -265,7 +277,7 @@ def test_patch_versions(mocker: MockerFixture) -> None:
             fail_mock.assert_called_once()
 
 
-def test_patch_versions_invalid_version(mocker: MockerFixture) -> None:
+def test_set_versions_invalid_version(mocker: MockerFixture) -> None:
     for silent in [True, False]:
         _mock_sys_argv_arguments(mocker)
         print_mock: MagicMock = mocker.patch("builtins.print")
@@ -274,7 +286,7 @@ def test_patch_versions_invalid_version(mocker: MockerFixture) -> None:
         _mock_fetch_workspaces(mocker, [_test_workspace1])
         _mock_parsed_arguments(
             mocker, _arguments({
-                "silent": silent, "patch_versions": desired_version
+                "silent": silent, "terraform_version": desired_version
             })
         )
         _mock_get_group_arguments(mocker)
@@ -285,16 +297,15 @@ def test_patch_versions_invalid_version(mocker: MockerFixture) -> None:
             print_mock.assert_not_called()
         else:
             print_mock.assert_has_calls([
-                _error_message((
-                    f"Error: the value for patch_versions you specified ({desired_version}) is not "
-                    f"valid."
-                ))
+                _error_message(
+                    f"Error: the version you specified ({desired_version}) is not valid."
+                )
             ])
             assert print_mock.call_count == 1
         fail_mock.assert_called_once()
 
 
-def test_patch_versions_downgrade_version(mocker: MockerFixture) -> None:
+def test_set_versions_downgrade_version(mocker: MockerFixture) -> None:
     for silent in [True, False]:
         _mock_sys_argv_arguments(mocker)
         print_mock: MagicMock = mocker.patch("builtins.print")
@@ -308,7 +319,7 @@ def test_patch_versions_downgrade_version(mocker: MockerFixture) -> None:
         desired_version = "0.13.0"
         _mock_parsed_arguments(
             mocker, _arguments({
-                "silent": silent, "patch_versions": desired_version
+                "silent": silent, "terraform_version": desired_version
             })
         )
         _mock_get_group_arguments(mocker)
@@ -330,44 +341,46 @@ def test_patch_versions_downgrade_version(mocker: MockerFixture) -> None:
 
 
 def test_lock_workspaces(mocker: MockerFixture) -> None:
-    for success in [True, False]:
-        _mock_sys_argv_arguments(mocker)
-        fail_mock: MagicMock = _mock_cli_fail(mocker)
-        lock_mock: MagicMock = mocker.patch(
-            "terraform_manager.entities.terraform.Terraform.lock_workspaces", return_value=success
-        )
-        _mock_fetch_workspaces(mocker, [_test_workspace1])
-        _mock_parsed_arguments(mocker, _arguments({"lock_workspaces": True}))
-        _mock_get_group_arguments(mocker)
+    for operation in ["lock_workspaces", "unlock_workspaces"]:
+        for success in [True, False]:
+            _mock_sys_argv_arguments(mocker)
+            fail_mock: MagicMock = _mock_cli_fail(mocker)
+            lock_mock: MagicMock = mocker.patch(
+                f"terraform_manager.entities.terraform.Terraform.{operation}", return_value=success
+            )
+            _mock_fetch_workspaces(mocker, [_test_workspace1])
+            _mock_parsed_arguments(mocker, _arguments({operation: True}))
+            _mock_get_group_arguments(mocker)
 
-        main()
+            main()
 
-        lock_mock.assert_called_once()
-        if success:
-            fail_mock.assert_not_called()
-        else:
-            fail_mock.assert_called_once()
+            lock_mock.assert_called_once()
+            if success:
+                fail_mock.assert_not_called()
+            else:
+                fail_mock.assert_called_once()
 
 
-def test_unlock_workspaces(mocker: MockerFixture) -> None:
-    for success in [True, False]:
-        _mock_sys_argv_arguments(mocker)
-        fail_mock: MagicMock = _mock_cli_fail(mocker)
-        unlock_mock: MagicMock = mocker.patch(
-            "terraform_manager.entities.terraform.Terraform.unlock_workspaces",
-            return_value=success
-        )
-        _mock_fetch_workspaces(mocker, [_test_workspace1])
-        _mock_parsed_arguments(mocker, _arguments({"unlock_workspaces": True}))
-        _mock_get_group_arguments(mocker)
+def test_enable_auto_apply(mocker: MockerFixture) -> None:
+    for operation in ["enable_auto_apply", "disable_auto_apply"]:
+        for success in [True, False]:
+            _mock_sys_argv_arguments(mocker)
+            fail_mock: MagicMock = _mock_cli_fail(mocker)
+            auto_apply_mock: MagicMock = mocker.patch(
+                "terraform_manager.entities.terraform.Terraform.set_auto_apply",
+                return_value=success
+            )
+            _mock_fetch_workspaces(mocker, [_test_workspace1])
+            _mock_parsed_arguments(mocker, _arguments({operation: True}))
+            _mock_get_group_arguments(mocker)
 
-        main()
+            main()
 
-        unlock_mock.assert_called_once()
-        if success:
-            fail_mock.assert_not_called()
-        else:
-            fail_mock.assert_called_once()
+            auto_apply_mock.assert_called_once()
+            if success:
+                fail_mock.assert_not_called()
+            else:
+                fail_mock.assert_called_once()
 
 
 def test_patch_working_directories(mocker: MockerFixture) -> None:

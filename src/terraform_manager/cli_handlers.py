@@ -39,27 +39,16 @@ def create_variables_template(silent: bool) -> None:
     _fallible(variables.create_variables_template(write_output=(not silent)))
 
 
-def patch_versions(terraform: Terraform, desired_version: Optional[str]) -> None:
+def set_versions(terraform: Terraform, desired_version: Optional[str]) -> None:
     if not semver.VersionInfo.isvalid(desired_version) and desired_version != LATEST_VERSION:
         if terraform.write_output:
-            # yapf: disable
-            print((
-                f"Error: the value for patch_versions you specified ({desired_version}) is not "
-                f"valid."
-            ), file=sys.stderr)
-            # yapf: enable
-        fail()
-    elif not terraform.check_versions(desired_version):
-        if terraform.write_output:
-            # yapf: disable
-            print((
-                "Error: at least one of the target workspaces has a version newer than the one you "
-                "are attempting to change to. No workspaces were updated."
-            ), file=sys.stderr)
-            # yapf: enable
+            print(
+                f"Error: the version you specified ({desired_version}) is not valid.",
+                file=sys.stderr
+            )
         fail()
     else:
-        _fallible(terraform.patch_versions(desired_version))
+        _fallible(terraform.set_versions(desired_version))
 
 
 def lock_or_unlock_workspaces(terraform: Terraform, lock: bool) -> None:
@@ -72,6 +61,10 @@ def set_working_directories(terraform: Terraform, working_directory: Optional[st
 
 def set_execution_modes(terraform: Terraform, execution_mode: str) -> None:
     _fallible(terraform.set_execution_modes(execution_mode))
+
+
+def set_auto_apply(terraform: Terraform, auto_apply: bool) -> None:
+    _fallible(terraform.set_auto_apply(auto_apply))
 
 
 def configure_variables(terraform: Terraform, file: str) -> None:

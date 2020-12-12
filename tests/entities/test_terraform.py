@@ -81,20 +81,17 @@ def test_passthrough(mocker: MockerFixture) -> None:
     check_versions_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.check_versions", return_value=True
     )
-    patch_versions_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.patch_versions", return_value=True
-    )
     version_summary_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.write_version_summary"
-    )
-    patch_working_directories_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.patch_working_directories", return_value=True
     )
     configure_variables_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.configure_variables", return_value=True
     )
     delete_variables_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.delete_variables", return_value=True
+    )
+    batch_operation_mock: MagicMock = mocker.patch(
+        "terraform_manager.entities.terraform.batch_operation", return_value=True
     )
 
     terraform = Terraform(TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION)
@@ -126,35 +123,12 @@ def test_passthrough(mocker: MockerFixture) -> None:
     assert terraform.check_versions(terraform_version)
     check_versions_mock.assert_called_once_with(workspaces, terraform_version)
 
-    assert terraform.patch_versions(terraform_version)
-    patch_versions_mock.assert_called_once_with(
-        TEST_TERRAFORM_DOMAIN,
-        TEST_ORGANIZATION,
-        workspaces,
-        new_version=terraform_version,
-        no_tls=False,
-        token=None,
-        write_output=False
-    )
-
     terraform.write_version_summary()
     version_summary_mock.assert_called_once_with(
         TEST_TERRAFORM_DOMAIN,
         TEST_ORGANIZATION,
         targeting_specific_workspaces=False,
         data=group_by_version(workspaces),
-        write_output=False
-    )
-
-    working_directory = "test"
-    assert terraform.set_working_directories(working_directory)
-    patch_working_directories_mock.assert_called_once_with(
-        TEST_TERRAFORM_DOMAIN,
-        TEST_ORGANIZATION,
-        workspaces,
-        new_working_directory=working_directory,
-        no_tls=False,
-        token=None,
         write_output=False
     )
 
@@ -180,3 +154,10 @@ def test_passthrough(mocker: MockerFixture) -> None:
         token=None,
         write_output=False
     )
+
+    assert terraform.set_working_directories("test")
+    assert terraform.set_execution_modes("local")
+    assert not terraform.set_execution_modes("something invalid")
+    assert terraform.set_auto_apply(False)
+    assert terraform.set_versions("1000.0.0")
+    assert batch_operation_mock.call_count == 4

@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-Nothing currently!
+### Added
+
+* Added functionality for the `--enable-auto-apply`/`--disable-auto-apply` operations (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Changed
+
+* Renovated the internal design of batch `PATCH` operations to optimize code reuse; removed no-longer-needed unit tests (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Changed the method name `patch_versions` to `set_versions` in the `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Renamed the CLI flag `--patch-versions` to `--terraform-version` (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Fixed
+
+* Parser-oriented errors will now respect the presence of the `-s` flag on the CLI (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ## 0.4.3 - 2020-12-06
 

@@ -4,13 +4,11 @@ from typing import Optional, List
 from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import CLOUD_DOMAIN
-from terraform_manager.terraform.execution_modes import patch_execution_modes
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 from terraform_manager.terraform.variables import configure_variables, delete_variables
-from terraform_manager.terraform.versions import check_versions, patch_versions, \
-    write_version_summary, group_by_version
-from terraform_manager.terraform.working_directories import patch_working_directories
-from terraform_manager.terraform.workspaces import fetch_all
+from terraform_manager.terraform.versions import check_versions, write_version_summary, \
+    group_by_version
+from terraform_manager.terraform.workspaces import fetch_all, batch_operation
 
 
 class Terraform:
@@ -162,7 +160,7 @@ class Terraform:
         """
         return check_versions(self.workspaces, new_version)
 
-    def patch_versions(self, new_version: str) -> bool:
+    def set_versions(self, new_version: str) -> bool:
         """
         Patches the Terraform version of the workspaces.
 
@@ -170,15 +168,27 @@ class Terraform:
         :return: Whether all patch operations were successful. If even a single one failed, returns
                  False.
         """
-        return patch_versions(
-            self.terraform_domain,
-            self.organization,
-            self.workspaces,
-            new_version=new_version,
-            no_tls=self.no_tls,
-            token=self.token,
-            write_output=self.write_output
-        )
+        if not self.check_versions(new_version):
+            if self.write_output:
+                # yapf: disable
+                print((
+                    "Error: at least one of the target workspaces has a version newer than the one "
+                    "you are attempting to change to. No workspaces were updated."
+                ), file=sys.stderr)
+                # yapf: enable
+            return False
+        else:
+            return batch_operation(
+                self.terraform_domain,
+                self.organization,
+                self.workspaces,
+                field_mapper=lambda w: w.terraform_version,
+                field_name="terraform-version",
+                new_value=new_version,
+                no_tls=self.no_tls,
+                token=self.token,
+                write_output=self.write_output
+            )
 
     def write_version_summary(self) -> None:
         """
@@ -203,11 +213,20 @@ class Terraform:
         :return: Whether all patch operations were successful. If even a single one failed, returns
                  False.
         """
-        return patch_working_directories(
+        def coalesce(working_directory: Optional[str]) -> str:  # pragma: no cover
+            if working_directory is None or len(working_directory) == 0:
+                return "<none>"
+            else:
+                return working_directory
+
+        return batch_operation(
             self.terraform_domain,
             self.organization,
             self.workspaces,
-            new_working_directory=new_working_directory,
+            field_mapper=lambda w: w.working_directory,
+            field_name="working-directory",
+            new_value="" if new_working_directory is None else new_working_directory,
+            report_only_value_mapper=coalesce,
             no_tls=self.no_tls,
             token=self.token,
             write_output=self.write_output
@@ -222,11 +241,41 @@ class Terraform:
         :return: Whether all patch operations were successful. If even a single one failed, returns
                  False.
         """
-        return patch_execution_modes(
+        if new_execution_mode not in ["remote", "local", "agent"]:
+            if self.write_output:
+                print(
+                    f"Error: invalid execution-mode specified: {new_execution_mode}",
+                    file=sys.stderr
+                )
+            return False
+        else:
+            return batch_operation(
+                self.terraform_domain,
+                self.organization,
+                self.workspaces,
+                field_mapper=lambda w: w.execution_mode,
+                field_name="execution-mode",
+                new_value=new_execution_mode,
+                no_tls=self.no_tls,
+                token=self.token,
+                write_output=self.write_output
+            )
+
+    def set_auto_apply(self, set_auto_apply: bool) -> bool:
+        """
+        Patches the auto-apply setting of the workspaces.
+
+        :param set_auto_apply: The desired value of the workspaces' auto-apply setting.
+        :return: Whether all patch operations were successful. If even a single one failed, returns
+                 False.
+        """
+        return batch_operation(
             self.terraform_domain,
             self.organization,
             self.workspaces,
-            new_execution_mode=new_execution_mode,
+            field_mapper=lambda w: w.auto_apply,
+            field_name="auto-apply",
+            new_value=set_auto_apply,
             no_tls=self.no_tls,
             token=self.token,
             write_output=self.write_output

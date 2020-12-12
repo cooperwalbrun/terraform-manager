@@ -79,10 +79,10 @@ _operation_group.add_argument(
     help="Summarizes the workspaces' Terraform version information."
 )
 _operation_group.add_argument(
-    "--patch-versions",
+    "--terraform-version",
     type=str,
     metavar="VERSION",
-    dest="patch_versions",
+    dest="terraform_version",
     help=(
         "Sets the workspaces' Terraform versions to the value provided. This can only be used to "
         "upgrade versions; downgrading is not supported due to limitations in Terraform itself. "
@@ -127,6 +127,18 @@ _operation_group.add_argument(
     )
 )
 _operation_group.add_argument(
+    "--enable-auto-apply",
+    action="store_true",
+    dest="enable_auto_apply",
+    help="Enables auto-apply on the workspaces."
+)
+_operation_group.add_argument(
+    "--disable-auto-apply",
+    action="store_true",
+    dest="disable_auto_apply",
+    help="Disables auto-apply on the workspaces."
+)
+_operation_group.add_argument(
     "--configure-vars",
     type=str,
     metavar="FILE",
@@ -164,6 +176,23 @@ def _get_arguments() -> List[str]:  # pragma: no cover
 def _parse_arguments(arguments: List[str]) -> Dict[str, Any]:
     arguments: Namespace = _parser.parse_args(arguments)
     return vars(arguments)
+
+
+def _is_silenced(
+    *,
+    arguments: Optional[List[str]] = None,
+    parsed_arguments: Optional[Dict[str, Any]] = None
+) -> bool:
+    if arguments is not None and ("-s" in arguments or "--silent" in arguments):
+        return True
+    elif parsed_arguments is not None and parsed_arguments["silent"]:
+        return True
+    else:
+        return False
+
+
+def _parser_fail() -> None:
+    sys.exit(2)  # Mimics the exit code of _parser.error()
 
 
 def _get_selection_argument(arguments: List[str]) -> Optional[str]:  # pragma: no cover
@@ -208,7 +237,7 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
     workspaces_to_target: Optional[List[str]] = arguments.get("workspaces")
     blacklist: bool = arguments["blacklist"]
     no_tls: bool = arguments["no_tls"]
-    silent: bool = arguments["silent"]
+    silent: bool = _is_silenced(parsed_arguments=arguments)
 
     terraform: Terraform = Terraform(
         domain,
@@ -223,8 +252,8 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         cli_handlers.fail()
     elif arguments["version_summary"]:
         terraform.write_version_summary()
-    elif arguments.get("patch_versions") is not None:
-        cli_handlers.patch_versions(terraform, arguments["patch_versions"])
+    elif arguments.get("terraform_version") is not None:
+        cli_handlers.set_versions(terraform, arguments["terraform_version"])
     elif arguments["lock_workspaces"] or arguments["unlock_workspaces"]:
         cli_handlers.lock_or_unlock_workspaces(terraform, arguments["lock_workspaces"])
     elif arguments.get("working_directory") is not None or arguments["clear_working_directory"]:
@@ -235,26 +264,39 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         cli_handlers.configure_variables(terraform, arguments["configure_variables"])
     elif arguments.get("delete_variables") is not None:
         cli_handlers.delete_variables(terraform, arguments["delete_variables"])
+    elif arguments["enable_auto_apply"] or arguments["disable_auto_apply"]:
+        cli_handlers.set_auto_apply(terraform, arguments["enable_auto_apply"])
     else:
-        _parser.error("Unable to determine which operation you are attempting to perform.")
+        if silent:
+            _parser_fail()
+        else:
+            _parser.error("Unable to determine which operation you are attempting to perform.")
 
 
 def main() -> None:
     args = _get_arguments()
 
     if len(args) == 0:
+        # There are no arguments, so we do not need to check for the --silent flag
         _parser.error("You must specify at least one argument.")
     elif _get_selection_argument(args) is not None and _get_special_argument(args) is not None:
-        _parser.error((
-            f"You cannot specify any selection arguments (such as {_get_selection_argument(args)}) "
-            f"at the same time as {_get_special_argument(args)}."
-        ))
+        if _is_silenced(arguments=args):
+            _parser_fail()
+        else:
+            _parser.error((
+                "You cannot specify any selection arguments (such as "
+                f"{_get_selection_argument(args)}) at the same time as "
+                f"{_get_special_argument(args)}."
+            ))
     else:
         arguments = _parse_arguments(args)
         if arguments["create_variables_template"]:
             _no_selection_arguments_main(arguments)
         elif "organization" not in arguments:
-            _parser.error("You must specify an organization to target.")
+            if _is_silenced(arguments=args, parsed_arguments=arguments):
+                _parser_fail()
+            else:
+                _parser.error("You must specify an organization to target.")
         else:
             _organization_required_main(arguments)
 
