@@ -13,7 +13,8 @@ def test_workspace(
     version: str = "0.13.1",
     locked: bool = False,
     working_directory: str = "",
-    execution_mode: str = "remote"
+    execution_mode: str = "remote",
+    speculative: bool = True
 ) -> Workspace:
     letters = string.ascii_lowercase
     return Workspace(
@@ -23,5 +24,6 @@ def test_workspace(
         False,
         locked,
         working_directory,
-        execution_mode
+        execution_mode,
+        speculative
     )

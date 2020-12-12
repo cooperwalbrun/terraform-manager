@@ -48,6 +48,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
         * Working directory
         * Execution mode
         * Auto-apply
+        * Speculative runs
 * Designed with security in mind:
     * The Python API of this module has built-in validation to prevent unsafe/invalid HTTP requests to the Terraform API
     * `terraform-manager` will never leak your Terraform token to the console, even if an error occurs
@@ -56,7 +57,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 
 * Due to the rate-limiting restrictions imposed by the Terraform API, this module does not
   officially support execution in a multi-threaded fashion (the rate limit is enforced by blocking
-  on the current thread)
+  on the current thread until requests can be sent safely)
 * `terraform-helper` is only tested against Python 3.6, 3.7, 3.8, and 3.9, so these are the only
   supported Python distributions
 
@@ -73,6 +74,13 @@ pip install terraform-manager
 >SSL/TLS, you may have to import your custom client certificate(s) into `certifi`'s `cacert.pem`
 >before `terraform-manager` operations will function properly. Make sure you modify the version of
 >`certifi` that `terraform-manager` uses.
+
+An example of including a custom certificate in `certifi` may look something like this (beware
+virtual environments):
+
+```bash
+cat your-certificate.crt >> $(python -m certifi)
+```
 
 ## Configuration
 
@@ -116,15 +124,15 @@ All ensuing examples use a Terraform organization name of `example123`.
 
 ### Selecting Workspaces (CLI)
 
-```bash
+```properties
 # Select all workspaces in example123
 terraform-manager -o example123 <operation>
 
+# Select all workspaces in example123 (all API interactions will use HTTP instead of HTTPS)
+terraform-manager -o example123 --no-tls <operation>
+
 # Select all workspaces in example123 at a custom domain
 terraform-manager -o example123 --domain something.mycompany.com <operation>
-
-# Select all workspaces in example123 at a custom domain (all API interactions will use HTTP instead of HTTPS)
-terraform-manager -o example123 --domain something.mycompany.com --no-tls <operation>
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
 terraform-manager -o example123 -w workspace1 workspace3 <operation>
@@ -140,7 +148,7 @@ terraform-manager -o example123 -w aws* -b <operation>
 
 >Note: the operations shown below can be combined with the selection arguments shown above.
 
-```bash
+```properties
 # Print a version summary to STDOUT
 terraform-manager -o example123 --version-summary
 
@@ -170,6 +178,12 @@ terraform-manager -o example123 --enable-auto-apply
 
 # Disable auto-apply and write a report to STDOUT
 terraform-manager -o example123 --disable-auto-apply
+
+# Enable speculative runs and write a report to STDOUT
+terraform-manager -o example123 --enable-speculative
+
+# Disable speculative runs and write a report to STDOUT
+terraform-manager -o example123 --disable-speculative
 
 # Delete variables with keys "some-key" and "other-key"
 terraform-manager -o example123 --delete-vars some-key other-key
@@ -209,14 +223,14 @@ from terraform_manager.entities.terraform import Terraform
 # Select all workspaces in example123
 terraform = Terraform("app.terraform.io", "example123")
 
-# Select all workspaces in example123 using a given token (instead of terraform-manager finding a token on its own)
+# Select all workspaces in example123 (all API interactions will use HTTP instead of HTTPS)
+terraform = Terraform("app.terraform.io", "example123", no_tls=True)
+
+# Select all workspaces in example123 using a token (instead of terraform-manager finding a token on its own)
 terraform = Terraform("app.terraform.io", "example123", token="YOUR TOKEN")
 
 # Select all workspaces in example123 at a custom domain
 terraform = Terraform("something.mycompany.com", "example123")
-
-# Select all workspaces in example123 at a custom domain (all API interactions will use HTTP instead of HTTPS)
-terraform = Terraform("something.mycompany.com", "example123", no_tls=True)
 
 # Select only workspaces with names "workspace1" or "workspace2" (case-insensitive)
 terraform = Terraform("app.terraform.io", "example123", workspace_names=["workspace1", "workspace2"])
@@ -278,6 +292,12 @@ success = terraform.set_auto_apply(True)
 
 # Disable auto-apply
 success = terraform.set_auto_apply(False)
+
+# Enable speculative runs
+success = terraform.set_speculative(True)
+
+# Disable speculative runs
+success = terraform.set_speculative(False)
 
 # Configure variables (first create a list of one or more variable objects, then configure them)
 variables = [

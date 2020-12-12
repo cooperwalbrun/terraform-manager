@@ -25,7 +25,8 @@ _test_json = {
             "terraform-version": _test_workspace1.terraform_version,
             "locked": _test_workspace1.is_locked,
             "working-directory": _test_workspace1.working_directory,
-            "execution-mode": _test_workspace1.execution_mode
+            "execution-mode": _test_workspace1.execution_mode,
+            "speculative-enabled": _test_workspace1.speculative
         }
     }, {
         "id": _test_workspace2.workspace_id,
@@ -35,7 +36,8 @@ _test_json = {
             "terraform-version": _test_workspace2.terraform_version,
             "locked": _test_workspace2.is_locked,
             "working-directory": _test_workspace2.working_directory,
-            "execution-mode": _test_workspace2.execution_mode
+            "execution-mode": _test_workspace2.execution_mode,
+            "speculative-enabled": _test_workspace2.speculative
         }
     }]
 }

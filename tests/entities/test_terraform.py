@@ -160,4 +160,5 @@ def test_passthrough(mocker: MockerFixture) -> None:
     assert not terraform.set_execution_modes("something invalid")
     assert terraform.set_auto_apply(False)
     assert terraform.set_versions("1000.0.0")
-    assert batch_operation_mock.call_count == 4
+    assert terraform.set_speculative(False)
+    assert batch_operation_mock.call_count == 5

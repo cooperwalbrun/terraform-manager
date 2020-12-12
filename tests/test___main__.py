@@ -24,7 +24,9 @@ _bool_flags: Dict[str, bool] = {
     "clear_working_directory": False,
     "create_variables_template": False,
     "enable_auto_apply": False,
-    "disable_auto_apply": False
+    "disable_auto_apply": False,
+    "enable_speculative": False,
+    "disable_speculative": False
 }
 
 
@@ -340,7 +342,7 @@ def test_set_versions_downgrade_version(mocker: MockerFixture) -> None:
         fail_mock.assert_called_once()
 
 
-def test_lock_workspaces(mocker: MockerFixture) -> None:
+def test_lock_or_unlock_workspaces(mocker: MockerFixture) -> None:
     for operation in ["lock_workspaces", "unlock_workspaces"]:
         for success in [True, False]:
             _mock_sys_argv_arguments(mocker)
@@ -361,13 +363,35 @@ def test_lock_workspaces(mocker: MockerFixture) -> None:
                 fail_mock.assert_called_once()
 
 
-def test_enable_auto_apply(mocker: MockerFixture) -> None:
+def test_enable_or_disable_auto_apply(mocker: MockerFixture) -> None:
     for operation in ["enable_auto_apply", "disable_auto_apply"]:
         for success in [True, False]:
             _mock_sys_argv_arguments(mocker)
             fail_mock: MagicMock = _mock_cli_fail(mocker)
             auto_apply_mock: MagicMock = mocker.patch(
                 "terraform_manager.entities.terraform.Terraform.set_auto_apply",
+                return_value=success
+            )
+            _mock_fetch_workspaces(mocker, [_test_workspace1])
+            _mock_parsed_arguments(mocker, _arguments({operation: True}))
+            _mock_get_group_arguments(mocker)
+
+            main()
+
+            auto_apply_mock.assert_called_once()
+            if success:
+                fail_mock.assert_not_called()
+            else:
+                fail_mock.assert_called_once()
+
+
+def test_enable_or_disable_speculative(mocker: MockerFixture) -> None:
+    for operation in ["enable_speculative", "disable_speculative"]:
+        for success in [True, False]:
+            _mock_sys_argv_arguments(mocker)
+            fail_mock: MagicMock = _mock_cli_fail(mocker)
+            auto_apply_mock: MagicMock = mocker.patch(
+                "terraform_manager.entities.terraform.Terraform.set_speculative",
                 return_value=success
             )
             _mock_fetch_workspaces(mocker, [_test_workspace1])

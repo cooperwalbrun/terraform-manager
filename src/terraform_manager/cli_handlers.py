@@ -67,6 +67,10 @@ def set_auto_apply(terraform: Terraform, auto_apply: bool) -> None:
     _fallible(terraform.set_auto_apply(auto_apply))
 
 
+def set_speculative(terraform: Terraform, speculative: bool) -> None:
+    _fallible(terraform.set_speculative(speculative))
+
+
 def configure_variables(terraform: Terraform, file: str) -> None:
     variables_to_configure = parse_variables(file, write_output=True)
     if len(variables_to_configure) == 0:
