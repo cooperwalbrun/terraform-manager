@@ -1,8 +1,9 @@
 # Contributing to terraform-manager
 
 1. [Development Workspace Setup](#development-workspace-setup)
-2. [Adding New Dependencies](#adding-new-dependencies)
-3. [Updating Dependencies](#updating-dependencies)
+2. [Dependency Management](#dependency-management)
+    1. [Adding New Dependencies](#adding-new-dependencies)
+    2. [Updating Dependencies](#updating-dependencies)
 4. [Unit Testing](#unit-testing)
 5. [Formatting Code](#formatting-code)
     1. [YAPF](#yapf)
@@ -28,13 +29,23 @@ pip install -e .[development] # Development and unit testing purposes
 pip install -e .[testing]     # Unit testing purposes only
 ```
 
-## Adding New Dependencies
+## Dependency Management
+ 
+Note that you may need to occasionally update your environment's `pip-tools` in order for the
+`pip-compile` command to run smoothly. In general, try to stay on the latest version of `pip-tools`
+unless this file documents otherwise. Updating `pip-tools` is as simple as running the following:
+
+```bash
+pip install --upgrade pip-tools
+```
+
+### Adding New Dependencies
 
 Before issuing these commands, ensure that you are in the virtual environment (see above) and that
 you executed the `pip install` command intended for development purposes (also above).
 
 1. Add the package to your environment.
-    ```bash
+    ```properties
     pip install <package> # Adds the package to your virtual environment
     ```
 
@@ -52,7 +63,7 @@ you executed the `pip install` command intended for development purposes (also a
 3. Update `requirements.txt` accordingly. All you need to do for this is execute the `pip-compile`
    command.
 
-## Updating Dependencies
+### Updating Dependencies
 
 >Before issuing a `putup --update` command to update PyScaffold, be sure to review the comments in
 >setup.py. After issuing `putup --update`, ensure that the `setuptools` version restrictions in
