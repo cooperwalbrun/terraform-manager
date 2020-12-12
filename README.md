@@ -124,7 +124,7 @@ All ensuing examples use a Terraform organization name of `example123`.
 
 ### Selecting Workspaces (CLI)
 
-```bash
+```properties
 # Select all workspaces in example123
 terraform-manager -o example123 <operation>
 
@@ -148,7 +148,7 @@ terraform-manager -o example123 -w aws* -b <operation>
 
 >Note: the operations shown below can be combined with the selection arguments shown above.
 
-```bash
+```properties
 # Print a version summary to STDOUT
 terraform-manager -o example123 --version-summary
 
