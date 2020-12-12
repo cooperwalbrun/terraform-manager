@@ -4,6 +4,7 @@ from typing import List, Dict
 
 from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
+from terraform_manager.utilities.utilities import wrap_text
 
 VersionSummary = Dict[str, List[Workspace]]
 
@@ -77,10 +78,7 @@ def write_version_summary(
                 formatted_workspaces = ", ".join(
                     sorted([workspace.name for workspace in workspaces])
                 )
-                formatted_workspaces = os.linesep.join(
-                    textwrap.wrap(formatted_workspaces, width=80, break_long_words=False)
-                )
-                table_data.append([version, formatted_workspaces])
+                table_data.append([version, wrap_text(formatted_workspaces, 80)])
         else:
             table_data = [[list(data.keys())[0], "All"]]
         print(

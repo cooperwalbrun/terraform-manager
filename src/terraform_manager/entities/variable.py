@@ -1,5 +1,7 @@
 from typing import Optional, Dict, Union, Any
 
+from regex import regex
+
 JSON = Dict[str, Union[str, bool]]
 
 _default_category: str = "terraform"
@@ -24,11 +26,7 @@ class Variable:
         self.key = key
         self.value = value
         self.description = description
-
-        if category in ["terraform", "env"]:
-            self.category = category
-        else:
-            self.category = _default_category
+        self.category = category
 
         # The HCL option is only available for "terraform" variables (not environment variables)
         self.hcl = hcl if self.category == "terraform" else False
@@ -58,16 +56,31 @@ class Variable:
         else:
             return None
 
+    @property
+    def is_valid(self) -> bool:
+        """
+        :return Whether this variable has valid properties in order for it to work properly with the
+                Terraform API.
+        """
+
+        key_pattern = r"^[a-zA-Z0-9_-]+$"
+        key_valid = regex.match(key_pattern, self.key) is not None
+        category_valid = self.category in ["terraform", "env"]
+        return key_valid and category_valid
+
     def __repr__(self) -> str:
-        return ("Variable(key={}, value={}, description={}, category={}, hcl={}, sensitive={})"
-                ).format(
-                    self.key,
-                    "<REDACTED>" if self.sensitive else self.value,
-                    self.description,
-                    self.category,
-                    self.hcl,
-                    self.sensitive
-                )
+        return (
+            "Variable(key={}, value={}, description={}, category={}, hcl={}, sensitive={}, "
+            "is_valid={})"
+        ).format(
+            self.key,
+            "<REDACTED>" if self.sensitive else self.value,
+            self.description,
+            self.category,
+            self.hcl,
+            self.sensitive,
+            self.is_valid
+        )
 
     def __str__(self) -> str:
         return repr(self)

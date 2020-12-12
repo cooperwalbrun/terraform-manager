@@ -1,11 +1,12 @@
+import textwrap
 from typing import List, Optional
 
 import requests
 from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform import get_api_headers
+from terraform_manager.terraform import get_api_headers, MESSAGE_COLUMN_CHARACTER_COUNT
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import safe_http_request, get_protocol
+from terraform_manager.utilities.utilities import safe_http_request, get_protocol, wrap_text
 
 
 def lock_or_unlock_workspaces(
@@ -56,7 +57,11 @@ def lock_or_unlock_workspaces(
         else:
             all_successful = False
             report.append([
-                workspace.name, workspace.is_locked, workspace.is_locked, "error", response.json()
+                workspace.name,
+                workspace.is_locked,
+                workspace.is_locked,
+                "error",
+                wrap_text(str(response.json()), MESSAGE_COLUMN_CHARACTER_COUNT)
             ])
 
     if write_output:

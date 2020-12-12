@@ -1,4 +1,5 @@
 import itertools
+import textwrap
 from fnmatch import fnmatch
 from typing import List, Optional, Dict, Any, Callable, Union, TypeVar
 
@@ -7,9 +8,10 @@ from requests import Response
 from tabulate import tabulate
 from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform import pagination, get_api_headers, SuccessHandler, ErrorHandler
+from terraform_manager.terraform import pagination, get_api_headers, SuccessHandler, ErrorHandler, \
+    MESSAGE_COLUMN_CHARACTER_COUNT
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import safe_http_request, get_protocol
+from terraform_manager.utilities.utilities import safe_http_request, get_protocol, wrap_text
 
 A = TypeVar("A")
 
@@ -188,7 +190,7 @@ def batch_operation(
             report_mapper(field_mapper(workspace)),
             report_mapper(field_mapper(workspace)),
             "error",
-            response.json()
+            wrap_text(str(response.json()), MESSAGE_COLUMN_CHARACTER_COUNT)
         ])
 
     result = _internal_batch_operation(

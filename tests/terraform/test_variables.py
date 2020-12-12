@@ -347,7 +347,7 @@ def test_configure_variables_report(mocker: MockerFixture) -> None:
         table_data = [[_test_workspace.name, _test_variable.key, operation, "success", "none"]]
         print_mock.assert_has_calls([
             call((
-                f'Terraform workspace variable configuration results for organization '
+                f"Terraform workspace variable configuration results for organization "
                 f'"{TEST_ORGANIZATION}" at "{TEST_TERRAFORM_DOMAIN}":'
             )),
             call(),
@@ -360,6 +360,20 @@ def test_configure_variables_report(mocker: MockerFixture) -> None:
             call()
         ])
         assert print_mock.call_count == 4
+
+
+def test_configure_variables_invalid(mocker: MockerFixture) -> None:
+    print_mock: MagicMock = mocker.patch("builtins.print")
+    assert not configure_variables(
+        TEST_TERRAFORM_DOMAIN,
+        TEST_ORGANIZATION,
+        workspaces=[_test_workspace],
+        variables=[Variable(key=" a bad key ", value="")],
+        write_output=True
+    )
+    print_mock.assert_called_once_with(
+        "At least one variable is invalid, so no variables will be configured.", file=sys.stderr
+    )
 
 
 def test_configure_variables_empty_argument() -> None:
