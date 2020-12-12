@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-Nothing currently!
+### Changed
+
+* Updated the `Tags` GitHub Actions workflow to use `pip install -r requirements.txt` (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ## v0.5.0 - 2020-12-12
 
