@@ -1,9 +1,13 @@
+from unittest.mock import MagicMock, call
+
 import responses
 from pytest_mock import MockerFixture
+from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform.workspaces import fetch_all
+from terraform_manager.terraform.workspaces import fetch_all, batch_operation, _map_workspaces
 
-from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN
+from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN, \
+    TEST_ORGANIZATION
 
 _test_organization: str = "test"
 _test_api_url: str = f"{TEST_API_URL}/organizations/{_test_organization}/workspaces"
@@ -40,6 +44,12 @@ _test_json = {
 
 def _establish_mocks(mocker: MockerFixture) -> None:
     mocker.patch("terraform_manager.terraform.credentials.find_token", return_value="test")
+
+
+def test_map_workspaces() -> None:
+    bad_tests = [[{"test": "test"}], [{"id": "good"}], [{"id": "good", "attributes": {}}]]
+    for test in bad_tests:
+        assert _map_workspaces(test) == []
 
 
 @responses.activate
@@ -134,3 +144,70 @@ def test_fetch_all_workspaces_bad_json_response(mocker: MockerFixture) -> None:
             status=200
         )
         assert fetch_all(TEST_TERRAFORM_DOMAIN, _test_organization) == []
+
+
+@responses.activate
+def test_batch_operation(mocker: MockerFixture) -> None:
+    for write_output in [True, False]:
+        _establish_mocks(mocker)
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        error_json = {"data": {"id": _test_workspace2.workspace_id}}
+        responses.add(
+            responses.PATCH,
+            f"{TEST_API_URL}/workspaces/{_test_workspace1.workspace_id}",
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f"{TEST_API_URL}/workspaces/{_test_workspace2.workspace_id}",
+            json=error_json,
+            status=500
+        )
+
+        (field, value) = ("test-field", "test")
+        assert not batch_operation(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
+            field_mapper=lambda w: w.terraform_version,
+            field_name=field,
+            report_only_value_mapper=lambda x: "test-" + x,
+            new_value=value,
+            write_output=write_output
+        )
+
+        if write_output:
+            # yapf: disable
+            print_mock.assert_has_calls([
+                call((
+                    f"Terraform workspace {field} patch results for organization "
+                    f'"{TEST_ORGANIZATION}" at "{TEST_TERRAFORM_DOMAIN}":'
+                )),
+                call(),
+                call(
+                    tabulate(
+                        [
+                            [
+                                _test_workspace2.name,
+                                "test-" + _test_workspace2.terraform_version,
+                                "test-" + _test_workspace2.terraform_version,
+                                "error",
+                                str(error_json)
+                            ],
+                            [
+                                _test_workspace1.name,
+                                "test-" + _test_workspace1.terraform_version,
+                                "test-" + value,
+                                "success",
+                                "none" if value != _test_workspace1.terraform_version
+                                else f"{field} unchanged"
+                            ]
+                        ],
+                        headers=["Workspace", "Before", "After", "Status", "Message"]
+                    )
+                ),
+                call()
+            ])
+            # yapf: enable
+            assert print_mock.call_count == 4
+        else:
+            print_mock.assert_not_called()

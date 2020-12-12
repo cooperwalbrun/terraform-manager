@@ -79,10 +79,10 @@ _operation_group.add_argument(
     help="Summarizes the workspaces' Terraform version information."
 )
 _operation_group.add_argument(
-    "--patch-versions",
+    "--terraform-version",
     type=str,
     metavar="VERSION",
-    dest="patch_versions",
+    dest="terraform_version",
     help=(
         "Sets the workspaces' Terraform versions to the value provided. This can only be used to "
         "upgrade versions; downgrading is not supported due to limitations in Terraform itself. "
@@ -125,6 +125,18 @@ _operation_group.add_argument(
         "Sets the workspaces' execution modes to the value provided. MODE must be either "
         '"remote", "local", or "agent" (case-sensitive).'
     )
+)
+_operation_group.add_argument(
+    "--enable-auto-apply",
+    action="store_true",
+    dest="enable_auto_apply",
+    help="Enables auto-apply on the workspaces."
+)
+_operation_group.add_argument(
+    "--disable-auto-apply",
+    action="store_true",
+    dest="disable_auto_apply",
+    help="Disables auto-apply on the workspaces."
 )
 _operation_group.add_argument(
     "--configure-vars",
@@ -240,8 +252,8 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         cli_handlers.fail()
     elif arguments["version_summary"]:
         terraform.write_version_summary()
-    elif arguments.get("patch_versions") is not None:
-        cli_handlers.patch_versions(terraform, arguments["patch_versions"])
+    elif arguments.get("terraform_version") is not None:
+        cli_handlers.set_versions(terraform, arguments["terraform_version"])
     elif arguments["lock_workspaces"] or arguments["unlock_workspaces"]:
         cli_handlers.lock_or_unlock_workspaces(terraform, arguments["lock_workspaces"])
     elif arguments.get("working_directory") is not None or arguments["clear_working_directory"]:
@@ -252,6 +264,8 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         cli_handlers.configure_variables(terraform, arguments["configure_variables"])
     elif arguments.get("delete_variables") is not None:
         cli_handlers.delete_variables(terraform, arguments["delete_variables"])
+    elif arguments["enable_auto_apply"] or arguments["disable_auto_apply"]:
+        cli_handlers.set_auto_apply(terraform, arguments["enable_auto_apply"])
     else:
         if silent:
             _parser_fail()
