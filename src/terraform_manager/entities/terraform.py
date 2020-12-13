@@ -6,9 +6,8 @@ from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import CLOUD_DOMAIN
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 from terraform_manager.terraform.variables import configure_variables, delete_variables
-from terraform_manager.terraform.versions import check_versions, write_version_summary, \
-    group_by_version
-from terraform_manager.terraform.workspaces import fetch_all, batch_operation
+from terraform_manager.terraform.workspaces import fetch_all, batch_operation, write_summary
+from terraform_manager.utilities.utilities import is_empty
 
 
 class Terraform:
@@ -158,7 +157,11 @@ class Terraform:
         :return: Whether there are any workspaces which would be downgraded by patching to the new
                  version.
         """
-        return check_versions(self.workspaces, new_version)
+
+        for workspace in self.workspaces:
+            if workspace.is_terraform_version_newer_than(new_version):
+                return False
+        return True
 
     def set_versions(self, new_version: str) -> bool:
         """
@@ -190,18 +193,18 @@ class Terraform:
                 write_output=self.write_output
             )
 
-    def write_version_summary(self) -> None:
+    def write_summary(self) -> None:
         """
-        Writes a tabulated summary of the workspaces and their versions to STDOUT. Long lines will
-        be wrapped automatically.
+        Writes a tabulated summary of the workspaces' configuration to STDOUT. Only values in scope
+        for terraform-manager will be written. Long lines will be wrapped automatically.
 
         :return: None
         """
-        write_version_summary(
+        write_summary(
             self.terraform_domain,
             self.organization,
+            self.workspaces,
             targeting_specific_workspaces=self.workspace_names is not None,
-            data=group_by_version(self.workspaces),
             write_output=self.write_output
         )
 
@@ -213,12 +216,6 @@ class Terraform:
         :return: Whether all patch operations were successful. If even a single one failed, returns
                  False.
         """
-        def coalesce(working_directory: Optional[str]) -> str:  # pragma: no cover
-            if working_directory is None or len(working_directory) == 0:
-                return "<none>"
-            else:
-                return working_directory
-
         return batch_operation(
             self.terraform_domain,
             self.organization,
@@ -226,7 +223,7 @@ class Terraform:
             field_mapper=lambda w: w.working_directory,
             field_name="working-directory",
             new_value="" if new_working_directory is None else new_working_directory,
-            report_only_value_mapper=coalesce,
+            report_only_value_mapper=lambda w: "<none>" if is_empty(w) else w,
             no_tls=self.no_tls,
             token=self.token,
             write_output=self.write_output

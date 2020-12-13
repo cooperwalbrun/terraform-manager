@@ -5,11 +5,10 @@ from pytest_mock import MockerFixture
 from terraform_manager.entities.terraform import Terraform
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import CLOUD_DOMAIN
-from terraform_manager.terraform.versions import group_by_version
 
 from tests.utilities.tooling import test_workspace, TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION
 
-_test_workspace: Workspace = test_workspace()
+_test_workspace: Workspace = test_workspace(version="0.13.0")
 
 
 def test_lazy_workspace_fetching(mocker: MockerFixture) -> None:
@@ -74,16 +73,12 @@ def test_configuration_validation_unexpected_blacklist_flag(mocker: MockerFixtur
 
 def test_passthrough(mocker: MockerFixture) -> None:
     workspaces = [_test_workspace]
+
     mocker.patch("terraform_manager.entities.terraform.fetch_all", return_value=workspaces)
     lock_or_unlock_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.lock_or_unlock_workspaces", return_value=True
     )
-    check_versions_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.check_versions", return_value=True
-    )
-    version_summary_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.write_version_summary"
-    )
+    summary_mock: MagicMock = mocker.patch("terraform_manager.entities.terraform.write_summary")
     configure_variables_mock: MagicMock = mocker.patch(
         "terraform_manager.entities.terraform.configure_variables", return_value=True
     )
@@ -119,16 +114,15 @@ def test_passthrough(mocker: MockerFixture) -> None:
         )
     ])
 
-    terraform_version = "0.13.5"
-    assert terraform.check_versions(terraform_version)
-    check_versions_mock.assert_called_once_with(workspaces, terraform_version)
+    assert terraform.check_versions("0.13.5")
+    assert not terraform.check_versions("0.12.9")
 
-    terraform.write_version_summary()
-    version_summary_mock.assert_called_once_with(
+    terraform.write_summary()
+    summary_mock.assert_called_once_with(
         TEST_TERRAFORM_DOMAIN,
         TEST_ORGANIZATION,
+        workspaces,
         targeting_specific_workspaces=False,
-        data=group_by_version(workspaces),
         write_output=False
     )
 

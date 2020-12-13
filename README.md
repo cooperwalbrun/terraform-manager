@@ -40,7 +40,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Select workspaces in either whitelist or blacklist style
     * Select workspaces using [Unix-like name pattern matching](https://docs.python.org/3/library/fnmatch.html)
 * Numerous operations available:
-    * View a high-level Terraform version summary of selected workspaces
+    * View a high-level summary of selected workspaces
     * Bulk update/create/delete variables of selected workspaces (with idempotency)
     * Bulk update settings of selected workspaces:
         * Terraform version
@@ -149,8 +149,8 @@ terraform-manager -o example123 -w aws* -b <operation>
 >Note: the operations shown below can be combined with the selection arguments shown above.
 
 ```properties
-# Print a version summary to STDOUT
-terraform-manager -o example123 --version-summary
+# Print a workspace summary to STDOUT
+terraform-manager -o example123 --summary
 
 # Upgrade workspace versions to 0.13.5 and write a report to STDOUT
 terraform-manager -o example123 --terraform-version 0.13.5

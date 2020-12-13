@@ -1,5 +1,5 @@
 import itertools
-import textwrap
+import os
 from fnmatch import fnmatch
 from typing import List, Optional, Dict, Any, Callable, Union, TypeVar
 
@@ -11,7 +11,8 @@ from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import pagination, get_api_headers, SuccessHandler, ErrorHandler, \
     MESSAGE_COLUMN_CHARACTER_COUNT
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import safe_http_request, get_protocol, wrap_text
+from terraform_manager.utilities.utilities import safe_http_request, get_protocol, wrap_text, \
+    is_empty
 
 A = TypeVar("A")
 
@@ -219,3 +220,69 @@ def batch_operation(
         print()
 
     return result
+
+
+def write_summary(
+    terraform_domain: str,
+    organization: str,
+    workspaces: List[Workspace],
+    *,
+    targeting_specific_workspaces: bool,
+    write_output: bool = False
+) -> None:
+    """
+    Writes a tabulated summary of the workspaces' configuration to STDOUT. Only values in scope for
+    terraform-manager will be written. Long lines will be wrapped automatically.
+
+    :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
+                             Terraform Cloud or Enterprise).
+    :param organization: The organization to which this data pertains.
+    :param workspaces: The workspaces to report on.
+    :param targeting_specific_workspaces: Whether one or more workspaces was specified in order to
+                                          filter the list of workspaces when they were fetched.
+    :param write_output: Whether to print the report to STDOUT. If this is False, this method is a
+                         no-op.
+    :return: None
+    """
+
+    if write_output:
+        print((
+            f'Terraform workspace summary for organization "{organization}" at '
+            f'"{terraform_domain}":'
+        ))
+        print()
+
+        report = []
+        for workspace in workspaces:
+            report.append([
+                workspace.workspace_id,
+                workspace.name,
+                workspace.terraform_version,
+                workspace.auto_apply,
+                workspace.speculative,
+                "<none>" if is_empty(workspace.working_directory) else workspace.working_directory,
+                workspace.execution_mode,
+                workspace.is_locked
+            ])
+
+        print(
+            tabulate(
+                sorted(report, key=lambda x: (x[1], x[0])),
+                headers=[
+                    "ID",
+                    "Name",
+                    "Version",
+                    "Auto-Apply",
+                    "Speculative",
+                    "Working Directory",
+                    "Execution Mode",
+                    "Locked"
+                ]
+            )
+        )
+
+        if targeting_specific_workspaces:
+            print()
+            print(f"{os.linesep}Note: information is only being displayed for certain workspaces.")
+
+        print()

@@ -1,10 +1,12 @@
+import os
 from unittest.mock import MagicMock, call
 
 import responses
 from pytest_mock import MockerFixture
 from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform.workspaces import fetch_all, batch_operation, _map_workspaces
+from terraform_manager.terraform.workspaces import fetch_all, batch_operation, _map_workspaces, \
+    write_summary
 
 from tests.utilities.tooling import test_workspace, TEST_API_URL, TEST_TERRAFORM_DOMAIN, \
     TEST_ORGANIZATION
@@ -13,7 +15,7 @@ _test_organization: str = "test"
 _test_api_url: str = f"{TEST_API_URL}/organizations/{_test_organization}/workspaces"
 
 _test_workspace1: Workspace = test_workspace(version="0.13.5")
-_test_workspace2: Workspace = test_workspace(version="0.12.28")
+_test_workspace2: Workspace = test_workspace(version="0.12.28", working_directory="test")
 
 # yapf: disable
 _test_json = {
@@ -211,5 +213,71 @@ def test_batch_operation(mocker: MockerFixture) -> None:
             ])
             # yapf: enable
             assert print_mock.call_count == 4
+        else:
+            print_mock.assert_not_called()
+
+
+def test_summary(mocker: MockerFixture) -> None:
+    for write_output in [True, False]:
+        print_mock: MagicMock = mocker.patch("builtins.print")
+        workspaces = [_test_workspace1, _test_workspace2]
+        write_summary(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION,
+            workspaces,
+            targeting_specific_workspaces=True,
+            write_output=write_output
+        )
+        # yapf: disable
+        data = [
+            [
+                _test_workspace1.workspace_id,
+                _test_workspace1.name,
+                _test_workspace1.terraform_version,
+                _test_workspace1.auto_apply,
+                _test_workspace1.speculative,
+                "<none>",
+                _test_workspace1.execution_mode,
+                _test_workspace1.is_locked
+            ], [
+                _test_workspace2.workspace_id,
+                _test_workspace2.name,
+                _test_workspace2.terraform_version,
+                _test_workspace2.auto_apply,
+                _test_workspace2.speculative,
+                _test_workspace2.working_directory,
+                _test_workspace2.execution_mode,
+                _test_workspace2.is_locked
+            ]
+        ]
+        # yapf: enable
+        if write_output:
+            print_mock.assert_has_calls([
+                call((
+                    f'Terraform workspace summary for organization "{TEST_ORGANIZATION}" at '
+                    f'"{TEST_TERRAFORM_DOMAIN}":'
+                )),
+                call(),
+                call(
+                    tabulate(
+                        sorted(data, key=lambda x: (x[1], x[0])),
+                        headers=[
+                            "ID",
+                            "Name",
+                            "Version",
+                            "Auto-Apply",
+                            "Speculative",
+                            "Working Directory",
+                            "Execution Mode",
+                            "Locked"
+                        ]
+                    )
+                ),
+                call(),
+                call(
+                    f"{os.linesep}Note: information is only being displayed for certain workspaces."
+                ),
+                call()
+            ])
         else:
             print_mock.assert_not_called()
