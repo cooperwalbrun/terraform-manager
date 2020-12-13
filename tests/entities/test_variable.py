@@ -32,6 +32,18 @@ def test_deserialization() -> None:
 def test_string_representation_redacts_sensitive_data() -> None:
     assert str(_test_variable) == (
         "Variable(key=key, value=<REDACTED>, description=, category=terraform, hcl=False, "
-        "sensitive=True)"
+        "sensitive=True, is_valid=True)"
     )
     assert repr(_test_variable) == str(_test_variable)
+
+
+def test_validity() -> None:
+    for key in ["", "  ", "  test  ", "a bad key", "another-bad-key@"]:
+        assert not Variable(key=key, value="").is_valid
+
+    for category in ["Terraform", "environment", "ENV", "TF"]:
+        assert not Variable(key="test", value="", category=category).is_valid
+
+    for key in ["a-good-key", "Some_Other_Key", "YET_1_ANOTHER_KEY_86"]:
+        for category in ["terraform", "env"]:
+            assert Variable(key=key, value="", category=category).is_valid

@@ -8,6 +8,8 @@ CLOUD_DOMAIN: str = "app.terraform.io"
 LATEST_VERSION: str = "latest"  # The string Terraform uses when a workspace is set to auto-update
 HTTP_CONTENT_TYPE: str = "application/vnd.api+json"
 
+MESSAGE_COLUMN_CHARACTER_COUNT: int = 70
+
 A = TypeVar("A")
 SuccessHandler = Callable[[A], None]
 ErrorHandler = Callable[[A, Union[Response, ErrorResponse]], None]

@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import textwrap
 from typing import List, Optional, Dict, Any, Callable, Union
 
 import requests
@@ -9,9 +10,10 @@ from tabulate import tabulate
 from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.terraform import get_api_headers, ErrorHandler, SuccessHandler
+from terraform_manager.terraform import get_api_headers, ErrorHandler, SuccessHandler, \
+    MESSAGE_COLUMN_CHARACTER_COUNT
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import get_protocol, safe_http_request
+from terraform_manager.utilities.utilities import get_protocol, safe_http_request, wrap_text
 
 
 def create_variables_template(*, write_output: bool = False) -> bool:
@@ -297,7 +299,11 @@ def delete_variables(
                 else:
                     all_successful = False
                     report.append([
-                        workspace.name, variable.key, "delete", "error", response.json()
+                        workspace.name,
+                        variable.key,
+                        "delete",
+                        "error",
+                        wrap_text(str(response.json()), MESSAGE_COLUMN_CHARACTER_COUNT)
                     ])
 
     if write_output:
@@ -330,7 +336,8 @@ def configure_variables(
     """
     Creates or updates (in-place) one or more variables for the workspaces. If variables already
     exist with same keys, they will instead be updated so that all their fields equal the ones given
-    in the variables passed to this method. This behavior allows this method to be idempotent.
+    in the variables passed to this method. This behavior allows this method to be idempotent. If
+    any of the specified variables are invalid, no operations will be performed by this method.
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
@@ -341,14 +348,21 @@ def configure_variables(
     :param token: A token suitable for authenticating against the Terraform API. If not specified, a
                   token will be searched for in the documented locations.
     :param write_output: Whether to print a tabulated result of the patch operations to STDOUT.
-    :return: Whether all HTTP operations were successful. If even a single one failed, returns
-             False.
+    :return: Whether all HTTP operations were successful. If even a single one failed OR any of the
+             variables are invalid, returns False.
     """
 
     if len(variables) == 0:
         if write_output:
             print("No variables to configure - returning successful immediately.")
         return True
+    elif not all([variable.is_valid for variable in variables]):
+        if write_output:
+            print(
+                "At least one variable is invalid, so no variables will be configured.",
+                file=sys.stderr
+            )
+        return False
 
     report = []
 
@@ -364,7 +378,13 @@ def configure_variables(
         operation = "create" if create else "update"
 
         def callback(v: Variable, response: Union[Response, ErrorResponse]) -> None:
-            report.append([w.name, v.key, operation, "error", response.json()])
+            report.append([
+                w.name,
+                v.key,
+                operation,
+                "error",
+                wrap_text(str(response.json()), MESSAGE_COLUMN_CHARACTER_COUNT)
+            ])
 
         return callback
 

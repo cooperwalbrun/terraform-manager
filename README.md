@@ -41,10 +41,10 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Select workspaces using [Unix-like name pattern matching](https://docs.python.org/3/library/fnmatch.html)
 * Numerous operations available:
     * View a high-level Terraform version summary of selected workspaces
-    * Bulk lock or unlock selected workspaces
     * Bulk update/create/delete variables of selected workspaces (with idempotency)
     * Bulk update settings of selected workspaces:
         * Terraform version
+        * Lock state
         * Working directory
         * Execution mode
         * Auto-apply
@@ -249,8 +249,7 @@ and/or unexpected behavior. Then, you can finally access the selected workspaces
 ```python
 terraform = Terraform(...)
 if terraform.configuration_is_valid():
-    selected_workspaces = terraform.workspaces
-    # Do stuff
+    # Do stuff with terraform.workspaces
 ```
 
 Be aware that `terraform.workspaces` implicitly calls `configuration_is_valid()`, and if the
@@ -299,16 +298,32 @@ success = terraform.set_speculative(True)
 # Disable speculative runs
 success = terraform.set_speculative(False)
 
+# Delete variables with keys "some-key" and "other-key"
+success = terraform.delete_variables(["some-key", "other-key"])
+
 # Configure variables (first create a list of one or more variable objects, then configure them)
 variables = [
     Variable(key="some-key", value="not-secret"),
-    Variable(key="other-key", value="secret", sensitive=True)
+    Variable(key="other-key", value="secret", sensitive=True),
+    Variable(key="yet-another-key", value="example", category="env")
 ]
-success = terraform.configure_variables(variables)
-
-# Delete variables with keys "some-key" and "other-key"
-success = terraform.delete_variables(["some-key", "other-key"])
+success = terraform.configure_variables(variables) # See below for more information on this method
 ```
+
+The `Variable` class is similar to the `Terraform` class in that it has built-in validation
+functionality. It is recommended to check whether your variables are valid before attempting to
+configure them:
+
+```python
+variables = [Variable(key="some-key", value="not-secret")]
+if all([var.is_valid for var in variables]):
+    terraform.configure_variables(variables)
+```
+
+Similar to the `Terraform` class's `workspaces` property (which performs automatic validation on the
+`Terraform` class), `configure_variables` will internally access the `is_valid` property of each
+variable. If any variable is invalid, no variables will be configured and the method will return
+`False`.
 
 ## Contributing
 

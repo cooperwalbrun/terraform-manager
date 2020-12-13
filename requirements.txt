@@ -4,10 +4,11 @@
 #
 #    pip-compile
 #
-certifi==2020.11.8        # via requests
+certifi==2020.12.5        # via requests
 chardet==3.0.4            # via requests
 idna==2.10                # via requests
 ratelimit==2.2.1          # via terraform-manager (setup.py)
+regex==2020.11.13         # via terraform-manager (setup.py)
 requests==2.25.0          # via terraform-manager (setup.py)
 semver==2.13.0            # via terraform-manager (setup.py)
 tabulate==0.8.7           # via terraform-manager (setup.py)
