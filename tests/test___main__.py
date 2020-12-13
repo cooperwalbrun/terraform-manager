@@ -18,7 +18,7 @@ _bool_flags: Dict[str, bool] = {
     "no_tls": False,
     "blacklist": False,
     "silent": False,
-    "version_summary": False,
+    "summary": False,
     "lock_workspaces": False,
     "unlock_workspaces": False,
     "clear_working_directory": False,
@@ -242,14 +242,14 @@ def test_no_workspaces_selected_with_filter(mocker: MockerFixture) -> None:
         fail_mock.assert_called_once()
 
 
-def test_version_summary(mocker: MockerFixture) -> None:
+def test_summary(mocker: MockerFixture) -> None:
     _mock_sys_argv_arguments(mocker)
     fail_mock: MagicMock = _mock_cli_fail(mocker)
     summary_mock: MagicMock = mocker.patch(
-        "terraform_manager.entities.terraform.Terraform.write_version_summary", return_value=None
+        "terraform_manager.entities.terraform.Terraform.write_summary", return_value=None
     )
     _mock_fetch_workspaces(mocker, [_test_workspace1])
-    _mock_parsed_arguments(mocker, _arguments({"version_summary": True}))
+    _mock_parsed_arguments(mocker, _arguments({"summary": True}))
     _mock_get_group_arguments(mocker)
 
     main()

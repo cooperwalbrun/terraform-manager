@@ -73,10 +73,10 @@ _selection_group.add_argument(
 )
 
 _operation_group.add_argument(
-    "--version-summary",
+    "--summary",
     action="store_true",
-    dest="version_summary",
-    help="Summarizes the workspaces' Terraform version information."
+    dest="summary",
+    help="Writes a summary of the workspaces' information in tabulated format to STDOUT."
 )
 _operation_group.add_argument(
     "--terraform-version",
@@ -262,8 +262,8 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
     )
     if not terraform.configuration_is_valid() or not cli_handlers.validate(terraform):
         cli_handlers.fail()
-    elif arguments["version_summary"]:
-        terraform.write_version_summary()
+    elif arguments["summary"]:
+        terraform.write_summary()
     elif arguments.get("terraform_version") is not None:
         cli_handlers.set_versions(terraform, arguments["terraform_version"])
     elif arguments["lock_workspaces"] or arguments["unlock_workspaces"]:

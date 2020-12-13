@@ -41,8 +41,9 @@ pip install --upgrade pip-tools
 
 ### Adding New Dependencies
 
-Before issuing these commands, ensure that you are in the virtual environment (see above) and that
-you executed the `pip install` command intended for development purposes (also above).
+Before issuing these commands, ensure that you are in the virtual environment and that you executed
+the `pip install` command intended for development purposes (see
+[Development Workspace Setup](#development-workspace-setup)).
 
 1. Add the package to your environment.
     ```properties
@@ -69,9 +70,9 @@ you executed the `pip install` command intended for development purposes (also a
 >setup.py. After issuing `putup --update`, ensure that the `setuptools` version restrictions in
 >`setup.py` and `pyproject.toml` are identical.
 
-Ensure that you are in the virtual environment (see above) before issuing these commands. Also, note
-that these commands will only update the `requirements.txt`. You will still have to execute a
-`pip install` command to update what is actually installed in your virtual environment.
+Ensure that you are in the virtual environment before issuing these commands. Also, note that these
+commands will only update the `requirements.txt`. You will still have to execute a `pip install`
+command to update what is actually installed in your virtual environment.
 
 ```bash
 pip-compile --upgrade                   # Update all packages
@@ -122,5 +123,5 @@ operations.
 
 This project uses a [CHANGELOG.md](CHANGELOG.md) to track changes. Please update this document along
 with your changes when you make a pull request (you can place your changes beneath the `Unreleased`
-section near the top). You should use the formatting that is already in place (see the document for
-more information).
+section near the top). Please also tag your line items with a reference to your GitHub profile. You
+should use the formatting that is already in place (see the document for more information).

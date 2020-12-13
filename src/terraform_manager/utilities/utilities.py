@@ -1,6 +1,6 @@
 import os
 import textwrap
-from typing import Callable, Union
+from typing import Callable, Union, Optional
 from urllib.parse import urlparse
 
 import requests
@@ -48,3 +48,7 @@ def safe_http_request(function: Callable[[], Response]) -> Union[Response, Error
 
 def wrap_text(text: str, column_limit: int) -> str:
     return os.linesep.join(textwrap.wrap(text, width=column_limit, break_long_words=False))
+
+
+def is_empty(text: Optional[str]) -> bool:
+    return text is None or len(text) == 0
