@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Nothing currently!
+
+## v0.5.1 - 2020-12-13
+
 ### Added
 
 * The `Variable` class now has an `is_valid` property for ascertaining that the variable could be configured via the Terraform API (by [@cooperwalbrun](https://github.com/cooperwalbrun))
