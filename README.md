@@ -49,7 +49,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
         * Execution mode
         * Auto-apply
         * Speculative runs
-* Designed with security in mind:
+* Designed with safety in mind:
     * The Python API of this module has built-in validation to prevent unsafe/invalid HTTP requests to the Terraform API
     * `terraform-manager` will never leak your Terraform token to the console, even if an error occurs
 
@@ -173,6 +173,9 @@ terraform-manager -o example123 --clear-working-dir
 # Set the execution mode to "local" and write a report to STDOUT
 terraform-manager -o example123 --execution-mode local
 
+# Set the execution mode to "agent" with an agent pool ID (required) and write a report to STDOUT
+terraform-manager -o example123 --execution-mode agent,apool-ZjT6A7mVFm5WHT5a
+
 # Enable auto-apply and write a report to STDOUT
 terraform-manager -o example123 --enable-auto-apply
 
@@ -285,6 +288,9 @@ success = terraform.set_working_directories(None)
 
 # Set the execution mode to "local"
 success = terraform.set_execution_modes("local")
+
+# Set the execution mode to "agent" with an agent pool ID (required)
+success = terraform.set_execution_modes("agent", agent_pool_id="apool-ZjT6A7mVFm5WHT5a")
 
 # Enable auto-apply
 success = terraform.set_auto_apply(True)

@@ -26,10 +26,38 @@ def test_version_comparisons() -> None:
 
 def test_workspace_equality() -> None:
     workspace_id = ""
-    workspace1 = Workspace(workspace_id, "", "0.12.28", False, False, "", "remote", True)
-    workspace2 = Workspace(workspace_id, "", "0.13.1", False, False, "", "remote", True)
+    workspace1 = Workspace(
+        workspace_id=workspace_id,
+        name="",
+        terraform_version="0.12.28",
+        auto_apply=False,
+        is_locked=False,
+        working_directory="",
+        agent_pool_id="",
+        execution_mode="remote",
+        speculative=True
+    )
+    workspace2 = Workspace(
+        workspace_id=workspace_id,
+        name="",
+        terraform_version="0.13.1",
+        auto_apply=False,
+        is_locked=False,
+        working_directory="",
+        agent_pool_id="",
+        execution_mode="remote",
+        speculative=True
+    )
     workspace3 = Workspace(
-        workspace_id + "something", "", "0.13.1", False, False, "", "remote", True
+        workspace_id=workspace_id + "something",
+        name="",
+        terraform_version="0.13.1",
+        auto_apply=False,
+        is_locked=False,
+        working_directory="",
+        agent_pool_id="",
+        execution_mode="remote",
+        speculative=True
     )
     assert workspace1 == workspace2
     assert workspace1 != workspace3

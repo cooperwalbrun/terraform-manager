@@ -7,7 +7,7 @@ from terraform_manager.terraform import CLOUD_DOMAIN
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
 from terraform_manager.terraform.variables import configure_variables, delete_variables
 from terraform_manager.terraform.workspaces import fetch_all, batch_operation, write_summary
-from terraform_manager.utilities.utilities import is_empty
+from terraform_manager.utilities.utilities import is_empty, coalesce
 
 
 class Terraform:
@@ -74,6 +74,10 @@ class Terraform:
             return False
         else:
             return True
+
+    @property
+    def is_terraform_cloud(self) -> bool:
+        return self.terraform_domain.lower() == CLOUD_DOMAIN
 
     def _compute_options_hash(self) -> int:
         # We only compute the hash of options that influence which workspaces are returned by the
@@ -185,9 +189,9 @@ class Terraform:
                 self.terraform_domain,
                 self.organization,
                 self.workspaces,
-                field_mapper=lambda w: w.terraform_version,
-                field_name="terraform-version",
-                new_value=new_version,
+                field_mappers=[lambda w: w.terraform_version],
+                field_names=["terraform-version"],
+                new_values=[new_version],
                 no_tls=self.no_tls,
                 token=self.token,
                 write_output=self.write_output
@@ -220,22 +224,29 @@ class Terraform:
             self.terraform_domain,
             self.organization,
             self.workspaces,
-            field_mapper=lambda w: w.working_directory,
-            field_name="working-directory",
-            new_value="" if new_working_directory is None else new_working_directory,
-            report_only_value_mapper=lambda w: "<none>" if is_empty(w) else w,
+            field_mappers=[lambda w: w.working_directory],
+            field_names=["working-directory"],
+            new_values=[coalesce(new_working_directory, "")],
+            report_only_value_mappers=[lambda d: coalesce(d, "<none>")],
             no_tls=self.no_tls,
             token=self.token,
             write_output=self.write_output
         )
 
-    def set_execution_modes(self, new_execution_mode: str) -> bool:
+    def set_execution_modes(
+        self, new_execution_mode: str, *, agent_pool_id: Optional[str] = None
+    ) -> bool:
         """
         Patches the execution modes of the workspaces.
 
         :param new_execution_mode: The new execution mode to assign to the workspaces. The value
                                    must be either "remote", "local", or "agent" (case-sensitive).
+        :param agent_pool_id: The agent-pool-id to assign to the workspaces. Only specify this
+                              argument if you are switching to "agent" execution mode AND you are
+                              targeting Terraform Cloud.
         :return: Whether all patch operations were successful. If even a single one failed, returns
+                 False. If the new_execution_mode and agent_pool_id arguments are not compatible,
+                 or you are not targeting Terraform Cloud but you specify "agent" mode, returns
                  False.
         """
         if new_execution_mode not in ["remote", "local", "agent"]:
@@ -245,14 +256,46 @@ class Terraform:
                     file=sys.stderr
                 )
             return False
+        elif new_execution_mode == "agent" and not self.is_terraform_cloud:
+            if self.write_output:
+                # yapf: disable
+                print((
+                    f'Error: desired execution-mode is "agent" but you are not targeting Terraform '
+                    f'Cloud (selected domain is "{self.terraform_domain}").'
+                ), file=sys.stderr)
+                # yapf: enable
+            return False
+        elif new_execution_mode == "agent" and is_empty(agent_pool_id):
+            if self.write_output:
+                print(
+                    f'Error: desired execution-mode is "agent" but no agent-pool-id was specified.',
+                    file=sys.stderr
+                )
+            return False
+        elif new_execution_mode != "agent" and not is_empty(agent_pool_id):
+            if self.write_output:
+                # yapf: disable
+                print((
+                    f'Error: desired execution-mode is "{new_execution_mode}" but an agent-pool-id '
+                    f"was specified."
+                ), file=sys.stderr)
+                # yapf: enable
+            return False
         else:
+            field_mappers = [lambda w: w.execution_mode]
+            field_names = ["execution-mode"]
+            new_values = [new_execution_mode]
+            if new_execution_mode == "agent":
+                field_mappers.append(lambda w: w.agent_pool_id)
+                field_names.append("agent-pool-id")
+                new_values.append(agent_pool_id)
             return batch_operation(
                 self.terraform_domain,
                 self.organization,
                 self.workspaces,
-                field_mapper=lambda w: w.execution_mode,
-                field_name="execution-mode",
-                new_value=new_execution_mode,
+                field_mappers=field_mappers,
+                field_names=field_names,
+                new_values=new_values,
                 no_tls=self.no_tls,
                 token=self.token,
                 write_output=self.write_output
@@ -270,9 +313,9 @@ class Terraform:
             self.terraform_domain,
             self.organization,
             self.workspaces,
-            field_mapper=lambda w: w.auto_apply,
-            field_name="auto-apply",
-            new_value=set_auto_apply,
+            field_mappers=[lambda w: w.auto_apply],
+            field_names=["auto-apply"],
+            new_values=[set_auto_apply],
             no_tls=self.no_tls,
             token=self.token,
             write_output=self.write_output
@@ -290,9 +333,9 @@ class Terraform:
             self.terraform_domain,
             self.organization,
             self.workspaces,
-            field_mapper=lambda w: w.speculative,
-            field_name="speculative-enabled",
-            new_value=set_speculative,
+            field_mappers=[lambda w: w.speculative],
+            field_names=["speculative-enabled"],
+            new_values=[set_speculative],
             no_tls=self.no_tls,
             token=self.token,
             write_output=self.write_output

@@ -1,4 +1,5 @@
 import os
+import sys
 from unittest.mock import MagicMock, call
 
 import responses
@@ -15,7 +16,9 @@ _test_organization: str = "test"
 _test_api_url: str = f"{TEST_API_URL}/organizations/{_test_organization}/workspaces"
 
 _test_workspace1: Workspace = test_workspace(version="0.13.5")
-_test_workspace2: Workspace = test_workspace(version="0.12.28", working_directory="test")
+_test_workspace2: Workspace = test_workspace(
+    version="0.12.28", working_directory="test", agent_pool_id="test"
+)
 
 # yapf: disable
 _test_json = {
@@ -168,14 +171,15 @@ def test_batch_operation(mocker: MockerFixture) -> None:
             status=500
         )
 
-        (field, value) = ("test-field", "test")
+        (field1, value1) = ("test-field1", _test_workspace1.terraform_version)
+        (field2, value2) = ("test-field2", "test2")
         assert not batch_operation(
             TEST_TERRAFORM_DOMAIN,
             TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
-            field_mapper=lambda w: w.terraform_version,
-            field_name=field,
-            report_only_value_mapper=lambda x: "test-" + x,
-            new_value=value,
+            field_mappers=[lambda w: w.terraform_version, lambda w: w.name],
+            field_names=[field1, field2],
+            new_values=[value1, value2],
+            report_only_value_mappers=[lambda x: "test-" + x, lambda x: "test-" + x],
             write_output=write_output
         )
 
@@ -183,8 +187,8 @@ def test_batch_operation(mocker: MockerFixture) -> None:
             # yapf: disable
             print_mock.assert_has_calls([
                 call((
-                    f"Terraform workspace {field} patch results for organization "
-                    f'"{TEST_ORGANIZATION}" at "{TEST_TERRAFORM_DOMAIN}":'
+                    f'Terraform workspace {"/".join([field1, field2])} patch results for '
+                    f'organization "{TEST_ORGANIZATION}" at "{TEST_TERRAFORM_DOMAIN}":'
                 )),
                 call(),
                 call(
@@ -192,21 +196,38 @@ def test_batch_operation(mocker: MockerFixture) -> None:
                         [
                             [
                                 _test_workspace2.name,
+                                field1,
                                 "test-" + _test_workspace2.terraform_version,
                                 "test-" + _test_workspace2.terraform_version,
                                 "error",
                                 str(error_json)
                             ],
                             [
+                                _test_workspace2.name,
+                                field2,
+                                "test-" + _test_workspace2.name,
+                                "test-" + _test_workspace2.name,
+                                "error",
+                                str(error_json)
+                            ],
+                            [
                                 _test_workspace1.name,
+                                field1,
                                 "test-" + _test_workspace1.terraform_version,
-                                "test-" + value,
+                                "test-" + value1,
                                 "success",
-                                "none" if value != _test_workspace1.terraform_version
-                                else f"{field} unchanged"
+                                "value unchanged"
+                            ],
+                            [
+                                _test_workspace1.name,
+                                field2,
+                                "test-" + _test_workspace1.name,
+                                "test-" + value2,
+                                "success",
+                                "none"
                             ]
                         ],
-                        headers=["Workspace", "Before", "After", "Status", "Message"]
+                        headers=["Workspace", "Field", "Before", "After", "Status", "Message"]
                     )
                 ),
                 call()
@@ -215,6 +236,79 @@ def test_batch_operation(mocker: MockerFixture) -> None:
             assert print_mock.call_count == 4
         else:
             print_mock.assert_not_called()
+
+
+def test_batch_operation_bad_arguments(mocker: MockerFixture) -> None:
+    def name(workspace: Workspace) -> str:
+        return workspace.name
+
+    def test1() -> None:
+        assert not batch_operation(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
+            field_mappers=[name],
+            field_names=["test", "test"],
+            new_values=["test", "test"],
+            write_output=write_output
+        )
+
+    def test2() -> None:
+        assert not batch_operation(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
+            field_mappers=[name, name],
+            field_names=["test"],
+            new_values=["test", "test"],
+            write_output=write_output
+        )
+
+    def test3() -> None:
+        assert not batch_operation(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
+            field_mappers=[name, name],
+            field_names=["test", "test"],
+            new_values=["test"],
+            write_output=write_output
+        )
+
+    def test4() -> None:
+        assert not batch_operation(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
+            field_mappers=[name, name],
+            field_names=["test", "test"],
+            new_values=["test", "test"],
+            report_only_value_mappers=[str],
+            write_output=write_output
+        )
+
+    def test5() -> None:
+        assert not batch_operation(
+            TEST_TERRAFORM_DOMAIN,
+            TEST_ORGANIZATION, [_test_workspace1, _test_workspace2],
+            field_mappers=[],
+            field_names=["test"],
+            new_values=["test"],
+            write_output=write_output
+        )
+
+    for write_output in [True, False]:
+        for test in [test1, test2, test3, test4, test5]:
+            print_mock: MagicMock = mocker.patch("builtins.print")
+
+            test()
+
+            if write_output:
+                # yapf: disable
+                print_mock.assert_called_once_with((
+                    "Error: invalid arguments passed to batch_operation. Ensure the number of "
+                    "elements specified for field_mappers, field_names, new_values, and "
+                    "report_only_value_mappers (if specified) match up."
+                ), file=sys.stderr)
+                # yapf: enable
+            else:
+                print_mock.assert_not_called()
 
 
 def test_summary(mocker: MockerFixture) -> None:
@@ -231,23 +325,23 @@ def test_summary(mocker: MockerFixture) -> None:
         # yapf: disable
         data = [
             [
-                _test_workspace1.workspace_id,
                 _test_workspace1.name,
                 _test_workspace1.terraform_version,
+                _test_workspace1.is_locked,
                 _test_workspace1.auto_apply,
                 _test_workspace1.speculative,
                 "<none>",
-                _test_workspace1.execution_mode,
-                _test_workspace1.is_locked
+                "<none>",
+                _test_workspace1.execution_mode
             ], [
-                _test_workspace2.workspace_id,
                 _test_workspace2.name,
                 _test_workspace2.terraform_version,
+                _test_workspace2.is_locked,
                 _test_workspace2.auto_apply,
                 _test_workspace2.speculative,
                 _test_workspace2.working_directory,
-                _test_workspace2.execution_mode,
-                _test_workspace2.is_locked
+                _test_workspace2.agent_pool_id,
+                _test_workspace2.execution_mode
             ]
         ]
         # yapf: enable
@@ -260,16 +354,16 @@ def test_summary(mocker: MockerFixture) -> None:
                 call(),
                 call(
                     tabulate(
-                        sorted(data, key=lambda x: (x[1], x[0])),
+                        sorted(data, key=lambda x: x[0]),
                         headers=[
-                            "ID",
                             "Name",
                             "Version",
+                            "Locked",
                             "Auto-Apply",
                             "Speculative",
                             "Working Directory",
-                            "Execution Mode",
-                            "Locked"
+                            "Agent Pool ID",
+                            "Execution Mode"
                         ]
                     )
                 ),

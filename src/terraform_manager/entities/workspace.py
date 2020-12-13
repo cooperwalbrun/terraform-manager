@@ -7,12 +7,14 @@ from terraform_manager.terraform import LATEST_VERSION
 class Workspace:
     def __init__(
         self,
+        *,
         workspace_id: str,
         name: str,
         terraform_version: str,
         auto_apply: bool,
         is_locked: bool,
         working_directory: str,
+        agent_pool_id: str,
         execution_mode: str,
         speculative: bool
     ):  # pragma: no cover
@@ -28,6 +30,7 @@ class Workspace:
         self.auto_apply = auto_apply
         self.is_locked = is_locked
         self.working_directory = working_directory
+        self.agent_pool_id = agent_pool_id
         self.execution_mode = execution_mode
         self.speculative = speculative
 
@@ -51,7 +54,8 @@ class Workspace:
             f"Workspace(id={self.workspace_id}, name={self.name}, "
             f"terraform_version={self.terraform_version}, auto_apply={self.auto_apply}, "
             f"is_locked={self.is_locked}, working_directory={self.working_directory}, "
-            f"execution_mode={self.execution_mode}, speculative={self.speculative})"
+            f"agent_pool_id={self.agent_pool_id}, execution_mode={self.execution_mode}, "
+            f"speculative={self.speculative})"
         )
 
     def __str__(self):

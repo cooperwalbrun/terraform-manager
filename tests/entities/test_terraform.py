@@ -156,3 +156,83 @@ def test_passthrough(mocker: MockerFixture) -> None:
     assert terraform.set_versions("1000.0.0")
     assert terraform.set_speculative(False)
     assert batch_operation_mock.call_count == 5
+
+
+def test_is_terraform_cloud() -> None:
+    domains = [CLOUD_DOMAIN, CLOUD_DOMAIN.upper()]
+    for domain in domains:
+        assert Terraform(domain, TEST_ORGANIZATION).is_terraform_cloud
+    domains = ["something.mycompany.com", "app.company.io"]
+    for domain in domains:
+        assert not Terraform(domain, TEST_ORGANIZATION).is_terraform_cloud
+
+
+def test_set_execution_modes(mocker: MockerFixture) -> None:
+    for write_output in [True, False]:
+        print_mock: MagicMock = mocker.patch("builtins.print")
+
+        cloud_terraform = Terraform(
+            TEST_TERRAFORM_DOMAIN, TEST_ORGANIZATION, write_output=write_output
+        )
+        enterprise_domain = "something.company.com"
+        enterprise_terraform = Terraform(
+            enterprise_domain, TEST_ORGANIZATION, write_output=write_output
+        )
+
+        for terraform in [cloud_terraform, enterprise_terraform]:
+            invalid = "invalid"
+            assert not terraform.set_execution_modes(invalid)
+            if write_output:
+                print_mock.assert_called_once_with(
+                    f"Error: invalid execution-mode specified: {invalid}", file=sys.stderr
+                )
+                print_mock.reset_mock()
+            else:
+                print_mock.assert_not_called()
+
+        assert not enterprise_terraform.set_execution_modes("agent", agent_pool_id="something")
+        if write_output:
+            # yapf: disable
+            print_mock.assert_called_once_with((
+                f'Error: desired execution-mode is "agent" but you are not targeting Terraform '
+                f'Cloud (selected domain is "{enterprise_domain}").'
+            ), file=sys.stderr)
+            # yapf: enable
+            print_mock.reset_mock()
+        else:
+            print_mock.assert_not_called()
+
+        assert not cloud_terraform.set_execution_modes("agent")
+        if write_output:
+            print_mock.assert_called_once_with(
+                f'Error: desired execution-mode is "agent" but no agent-pool-id was specified.',
+                file=sys.stderr
+            )
+            print_mock.reset_mock()
+        else:
+            print_mock.assert_not_called()
+
+        for test in [None, ""]:
+            assert not cloud_terraform.set_execution_modes("agent", agent_pool_id=test)
+            if write_output:
+                print_mock.assert_called_once_with(
+                    f'Error: desired execution-mode is "agent" but no agent-pool-id was specified.',
+                    file=sys.stderr
+                )
+                print_mock.reset_mock()
+            else:
+                print_mock.assert_not_called()
+
+        for test in ["remote", "local"]:
+            for terraform in [cloud_terraform, enterprise_terraform]:
+                assert not terraform.set_execution_modes(test, agent_pool_id="something")
+                if write_output:
+                    # yapf: disable
+                    print_mock.assert_called_once_with((
+                        f'Error: desired execution-mode is "{test}" but an agent-pool-id was '
+                        f'specified.'
+                    ), file=sys.stderr)
+                    # yapf: enable
+                    print_mock.reset_mock()
+                else:
+                    print_mock.assert_not_called()

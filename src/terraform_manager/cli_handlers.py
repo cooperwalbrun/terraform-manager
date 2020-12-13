@@ -60,7 +60,11 @@ def set_working_directories(terraform: Terraform, working_directory: Optional[st
 
 
 def set_execution_modes(terraform: Terraform, execution_mode: str) -> None:
-    _fallible(terraform.set_execution_modes(execution_mode))
+    arguments = execution_mode.split(",")
+    if len(arguments) > 1:
+        _fallible(terraform.set_execution_modes(arguments[0], agent_pool_id=arguments[1]))
+    else:
+        _fallible(terraform.set_execution_modes(execution_mode))
 
 
 def set_auto_apply(terraform: Terraform, auto_apply: bool) -> None:

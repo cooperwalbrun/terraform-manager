@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing currently!
 
+## v0.5.2 - 2020-12-13
+
+### Added
+
+* Added a new `is_terraform_cloud` property to the `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Fixed
+
+* Fixed the implementation of `--execution-mode` to properly handle the `agent` mode via inclusion of an optional `agent-pool-id` (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
 ## v0.5.1 - 2020-12-13
 
 ### Added
