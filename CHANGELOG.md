@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Nothing currently!
+
+## v0.5.2 - 2020-12-13
+
 ### Added
 
 * Added a new `is_terraform_cloud` property to the `Terraform` class (by [@cooperwalbrun](https://github.com/cooperwalbrun))
