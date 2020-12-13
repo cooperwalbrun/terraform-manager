@@ -1,5 +1,6 @@
 import itertools
 import os
+import sys
 from fnmatch import fnmatch
 from typing import List, Optional, Dict, Any, Callable, Union, TypeVar
 
@@ -12,7 +13,7 @@ from terraform_manager.terraform import pagination, get_api_headers, SuccessHand
     MESSAGE_COLUMN_CHARACTER_COUNT
 from terraform_manager.utilities.throttle import throttle
 from terraform_manager.utilities.utilities import safe_http_request, get_protocol, wrap_text, \
-    is_empty
+    coalesce, safe_deep_get
 
 A = TypeVar("A")
 
@@ -40,16 +41,20 @@ def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
     workspaces = []
     for json_object in json:
         if is_valid(json_object):
+            agent_pool_id = safe_deep_get(
+                json_object, ["relationships", "agent-pool", "data", "id"]
+            )
             workspaces.append(
                 Workspace(
-                    json_object["id"],
-                    json_object["attributes"]["name"],
-                    json_object["attributes"]["terraform-version"],
-                    json_object["attributes"]["auto-apply"],
-                    json_object["attributes"]["locked"],
-                    json_object["attributes"]["working-directory"],
-                    json_object["attributes"]["execution-mode"],
-                    json_object["attributes"]["speculative-enabled"]
+                    workspace_id=json_object["id"],
+                    name=json_object["attributes"]["name"],
+                    terraform_version=json_object["attributes"]["terraform-version"],
+                    auto_apply=json_object["attributes"]["auto-apply"],
+                    is_locked=json_object["attributes"]["locked"],
+                    working_directory=json_object["attributes"]["working-directory"],
+                    agent_pool_id=coalesce(agent_pool_id, ""),
+                    execution_mode=json_object["attributes"]["execution-mode"],
+                    speculative=json_object["attributes"]["speculative-enabled"]
                 )
             )
     return workspaces
@@ -136,10 +141,10 @@ def batch_operation(
     organization: str,
     workspaces: List[Workspace],
     *,
-    field_mapper: Callable[[Workspace], A],
-    field_name: str,
-    new_value: A,
-    report_only_value_mapper: Optional[Callable[[A], str]] = None,
+    field_mappers: List[Callable[[Workspace], A]],
+    field_names: List[str],
+    new_values: List[A],
+    report_only_value_mappers: Optional[List[Callable[[A], str]]] = None,
     no_tls: bool = False,
     token: Optional[str] = None,
     write_output: bool = False
@@ -152,17 +157,20 @@ def batch_operation(
                              Terraform Cloud or Enterprise).
     :param organization: The organization containing the workspaces to patch.
     :param workspaces: The workspaces to patch.
-    :param field_mapper: A function which will be passed a Workspace object that must return a field
-                         value to be compared against the new_value and printed in the tabulated
-                         report.
-    :param field_name: The Terraform API-compatible name of the field returned by field_mapper (e.g.
-                       "auto-apply" instead of "auto apply" or "Auto Apply").
-    :param new_value: The value to update the workspace field to (where the field corresponds to
-                      field_name).
-    :param report_only_value_mapper: A function which will be passed the result of the field_mapper
-                                     function when writing the tabulated report's "Before" and
-                                     "After" columns. If not specified, the default will be the
-                                     str() function.
+    :param field_mappers: One or more functions which will be passed a Workspace object that must
+                         return a field value to be compared against the new_value and printed in
+                         the tabulated report.
+    :param field_names: One or more Terraform API-compatible names of the fields returned by
+                        field_mappers (e.g. "auto-apply" instead of "auto apply" or "Auto Apply").
+                        There must be one field name for each field mapper (and order matters).
+    :param new_values: The values to update the workspace field to. There must be one new value for
+                       each field name (and order matters).
+    :param report_only_value_mappers: One or more functions which will be passed the result of the
+                                      field_mappers function when writing the tabulated report's
+                                      "Before" and "After" columns. There must be one report-only
+                                      value mapper for each field mapper (and order matters). If not
+                                      specified, the default will be the str() function for all
+                                      fields.
     :param no_tls: Whether to use SSL/TLS encryption when communicating with the Terraform API.
     :param token: A token suitable for authenticating against the Terraform API. If not specified, a
                   token will be searched for in the documented locations.
@@ -171,28 +179,52 @@ def batch_operation(
              False.
     """
 
-    json = {"data": {"type": "workspaces", "attributes": {field_name: new_value}}}
+    report_mappers = [
+        str for _ in field_mappers
+    ] if report_only_value_mappers is None else report_only_value_mappers
+
+    if len(field_mappers) == 0 or len(field_mappers) != len(field_names) or \
+            len(field_mappers) != len(new_values) or len(field_mappers) != len(report_mappers):
+        if write_output:
+            # yapf: disable
+            print((
+                "Error: invalid arguments passed to batch_operation. Ensure the number of elements "
+                "specified for field_mappers, field_names, new_values, and "
+                "report_only_value_mappers (if specified) match up."
+            ), file=sys.stderr)
+            # yapf: enable
+        return False
+
+    json = {
+        "data": {
+            "type": "workspaces",
+            "attributes": {field_names[i]: new_values[i]
+                           for i in range(len(field_names))}
+        }
+    }
     report = []
 
-    report_mapper = str if report_only_value_mapper is None else report_only_value_mapper
-
     def on_success(workspace: Workspace) -> None:
-        report.append([
-            workspace.name,
-            report_mapper(field_mapper(workspace)),
-            report_mapper(new_value),
-            "success",
-            f"{field_name} unchanged" if field_mapper(workspace) == new_value else "none"
-        ])
+        for i in range(len(field_names)):
+            report.append([
+                workspace.name,
+                field_names[i],
+                report_mappers[i](field_mappers[i](workspace)),
+                report_mappers[i](new_values[i]),
+                "success",
+                "value unchanged" if field_mappers[i](workspace) == new_values[i] else "none"
+            ])
 
     def on_failure(workspace: Workspace, response: Union[Response, ErrorResponse]) -> None:
-        report.append([
-            workspace.name,
-            report_mapper(field_mapper(workspace)),
-            report_mapper(field_mapper(workspace)),
-            "error",
-            wrap_text(str(response.json()), MESSAGE_COLUMN_CHARACTER_COUNT)
-        ])
+        for i in range(len(field_names)):
+            report.append([
+                workspace.name,
+                field_names[i],
+                report_mappers[i](field_mappers[i](workspace)),
+                report_mappers[i](field_mappers[i](workspace)),
+                "error",
+                wrap_text(str(response.json()), MESSAGE_COLUMN_CHARACTER_COUNT)
+            ])
 
     result = _internal_batch_operation(
         terraform_domain,
@@ -207,14 +239,14 @@ def batch_operation(
 
     if write_output:
         print((
-            f'Terraform workspace {field_name} patch results for organization "{organization}" '
-            f'at "{terraform_domain}":'
+            f'Terraform workspace {"/".join(field_names)} patch results for organization '
+            f'"{organization}" at "{terraform_domain}":'
         ))
         print()
         print(
             tabulate(
-                sorted(report, key=lambda x: (x[3], x[0])),
-                headers=["Workspace", "Before", "After", "Status", "Message"]
+                sorted(report, key=lambda x: (x[4], x[0], x[1])),
+                headers=["Workspace", "Field", "Before", "After", "Status", "Message"]
             )
         )
         print()
@@ -255,28 +287,28 @@ def write_summary(
         report = []
         for workspace in workspaces:
             report.append([
-                workspace.workspace_id,
                 workspace.name,
                 workspace.terraform_version,
+                workspace.is_locked,
                 workspace.auto_apply,
                 workspace.speculative,
-                "<none>" if is_empty(workspace.working_directory) else workspace.working_directory,
-                workspace.execution_mode,
-                workspace.is_locked
+                coalesce(workspace.working_directory, "<none>"),
+                coalesce(workspace.agent_pool_id, "<none>"),
+                workspace.execution_mode
             ])
 
         print(
             tabulate(
-                sorted(report, key=lambda x: (x[1], x[0])),
+                sorted(report, key=lambda x: x[0]),
                 headers=[
-                    "ID",
                     "Name",
                     "Version",
+                    "Locked",
                     "Auto-Apply",
                     "Speculative",
                     "Working Directory",
-                    "Execution Mode",
-                    "Locked"
+                    "Agent Pool ID",
+                    "Execution Mode"
                 ]
             )
         )

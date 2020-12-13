@@ -13,17 +13,19 @@ def test_workspace(
     version: str = "0.13.1",
     locked: bool = False,
     working_directory: str = "",
+    agent_pool_id: str = "",
     execution_mode: str = "remote",
     speculative: bool = True
 ) -> Workspace:
     letters = string.ascii_lowercase
     return Workspace(
-        "".join([random.choice(letters) for _ in range(5)]),
-        "".join([random.choice(letters) for _ in range(5)]),
-        version,
-        False,
-        locked,
-        working_directory,
-        execution_mode,
-        speculative
+        workspace_id="".join([random.choice(letters) for _ in range(5)]),
+        name="".join([random.choice(letters) for _ in range(5)]),
+        terraform_version=version,
+        auto_apply=False,
+        is_locked=locked,
+        working_directory=working_directory,
+        agent_pool_id=agent_pool_id,
+        execution_mode=execution_mode,
+        speculative=speculative
     )

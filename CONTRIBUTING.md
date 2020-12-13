@@ -74,7 +74,7 @@ Ensure that you are in the virtual environment before issuing these commands. Al
 commands will only update the `requirements.txt`. You will still have to execute a `pip install`
 command to update what is actually installed in your virtual environment.
 
-```bash
+```properties
 pip-compile --upgrade                   # Update all packages
 pip-compile --upgrade-package <package> # Update a specific package
 pip install -r requirements.txt         # Run this after running either of the above
@@ -87,7 +87,7 @@ dependencies installed (see above) if running tests via `setup.py`, otherwise en
 in a virtual environment if running tests via `tox`. Then, run the corresponding command in this
 project's root directory:
 
-```bash
+```properties
 python setup.py test # Run unit tests using your current virtual environment's Python interpreter
 tox                  # Run unit tests using tox (requires that you have the necessary Python interpreters on your machine)
 ```

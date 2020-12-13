@@ -407,7 +407,7 @@ def test_enable_or_disable_speculative(mocker: MockerFixture) -> None:
                 fail_mock.assert_called_once()
 
 
-def test_patch_working_directories(mocker: MockerFixture) -> None:
+def test_set_working_directories(mocker: MockerFixture) -> None:
     for success in [True, False]:
         _mock_sys_argv_arguments(mocker)
         fail_mock: MagicMock = _mock_cli_fail(mocker)
@@ -446,7 +446,7 @@ def test_clear_working_directories(mocker: MockerFixture) -> None:
     fail_mock.assert_not_called()
 
 
-def test_patch_execution_modes(mocker: MockerFixture) -> None:
+def test_set_execution_modes(mocker: MockerFixture) -> None:
     for success in [True, False]:
         _mock_sys_argv_arguments(mocker)
         fail_mock: MagicMock = _mock_cli_fail(mocker)
@@ -463,6 +463,30 @@ def test_patch_execution_modes(mocker: MockerFixture) -> None:
         main()
 
         working_directory_mock.assert_called_once_with(desired_execution_mode)
+        if success:
+            fail_mock.assert_not_called()
+        else:
+            fail_mock.assert_called_once()
+
+
+def test_set_execution_modes_agent(mocker: MockerFixture) -> None:
+    for success in [True, False]:
+        _mock_sys_argv_arguments(mocker)
+        fail_mock: MagicMock = _mock_cli_fail(mocker)
+        working_directory_mock: MagicMock = mocker.patch(
+            "terraform_manager.entities.terraform.Terraform.set_execution_modes",
+            return_value=success
+        )
+        _mock_fetch_workspaces(mocker, [_test_workspace1])
+
+        pool_id = "apool-ZjT6A7mVFm5WHT5a"
+        desired_execution_mode = f"agent,{pool_id}"
+        _mock_parsed_arguments(mocker, _arguments({"execution_mode": desired_execution_mode}))
+        _mock_get_group_arguments(mocker)
+
+        main()
+
+        working_directory_mock.assert_called_once_with("agent", agent_pool_id=pool_id)
         if success:
             fail_mock.assert_not_called()
         else:

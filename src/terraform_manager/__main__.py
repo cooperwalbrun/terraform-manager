@@ -67,8 +67,8 @@ _selection_group.add_argument(
     action="store_true",
     dest="silent",
     help=(
-        "Disables all STDOUT and STDERR output. Use with caution, as this will revoke all "
-        "potentially helpful error messages."
+        "Disables all STDOUT and STDERR output. Use with caution, as this will essentially revoke "
+        "all (potentially helpful) error messages."
     )
 )
 
@@ -123,7 +123,8 @@ _operation_group.add_argument(
     dest="execution_mode",
     help=(
         "Sets the workspaces' execution modes to the value provided. MODE must be either "
-        '"remote", "local", or "agent" (case-sensitive).'
+        '"remote", "local", or "agent" (case-sensitive). If you choose "agent", you must also add '
+        'a comma followed by the agent-pool-id as in "--execution-mode agent,apool-BjTA7mVFm5WHTc3"'
     )
 )
 _operation_group.add_argument(

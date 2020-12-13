@@ -1,5 +1,5 @@
 from requests import RequestException, Response
-from terraform_manager.utilities.utilities import parse_domain, safe_http_request
+from terraform_manager.utilities.utilities import parse_domain, safe_http_request, safe_deep_get
 
 
 def test_parse_url() -> None:
@@ -38,3 +38,13 @@ def test_safe_http_request() -> None:
 
     response = safe_http_request(fail)
     assert response.json() == {"terraform-manager": {"error": message, "status": 500}}
+
+
+def test_safe_deep_get() -> None:
+    assert safe_deep_get({}, []) is None
+    assert safe_deep_get({}, ["test", "test"]) is None
+    assert safe_deep_get({"test": {"test": "test"}}, ["test", "test"]) == "test"
+    for test in ["", None]:
+        assert safe_deep_get({"test": {"test": test}}, []) is None
+        assert safe_deep_get({"test": test}, ["test", "test"]) is None
+        assert safe_deep_get({"test": test}, ["test", "test", "test"]) is None

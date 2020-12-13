@@ -1,6 +1,6 @@
 import os
 import textwrap
-from typing import Callable, Union, Optional
+from typing import Callable, Union, Optional, Dict, Any, List
 from urllib.parse import urlparse
 
 import requests
@@ -52,3 +52,25 @@ def wrap_text(text: str, column_limit: int) -> str:
 
 def is_empty(text: Optional[str]) -> bool:
     return text is None or len(text) == 0
+
+
+def coalesce(text: Optional[str], default: str) -> str:
+    return default if is_empty(text) else text
+
+
+def safe_deep_get(dictionary: Dict[str, Any], path: List[str]) -> Optional[Any]:
+    if len(path) > 0:
+        m = dictionary
+        for i in range(len(path) - 1):
+            if isinstance(m, dict):
+                m = m.get(path[i], {})
+                if m is None:
+                    m = {}
+            else:
+                return None
+        if isinstance(m, dict):
+            return m.get(path[-1])
+        else:
+            return None
+    else:
+        return None
