@@ -21,7 +21,7 @@
 `terraform-manager` is a multipurpose Python module and CLI tool for managing Terraform workspaces
 in batch fashion. It is specifically designed to help Terraform administrators manage arbitrarily
 many workspaces at once. It is also compatible with both Terraform Cloud and Terraform Enterprise,
-so regardless of what you or your company is using, this CLI can provide value.
+so regardless of what you or your company is using, this tool can provide value.
 
 ### Feature Summary
 
@@ -41,6 +41,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Select workspaces using [Unix-like name pattern matching](https://docs.python.org/3/library/fnmatch.html)
 * Numerous operations available:
     * View a high-level summary of selected workspaces
+    * Watch all workspace run activity in near-real-time
     * Bulk update/create/delete variables of selected workspaces (with idempotency)
     * Bulk update settings of selected workspaces:
         * Terraform version
@@ -81,6 +82,9 @@ virtual environments):
 ```bash
 cat your-certificate.crt >> $(python -m certifi)
 ```
+
+This command would need to be re-run every time you update `terraform-manager` *and* it includes an
+underlying `certifi` version change.
 
 ## Configuration
 
@@ -151,6 +155,9 @@ terraform-manager -o example123 -w aws* -b <operation>
 ```properties
 # Print a workspace summary to STDOUT
 terraform-manager -o example123 --summary
+
+# Launch the workspace run watcher, which creates a TLI in STDOUT
+terraform-manager -o example123 --watch-runs
 
 # Upgrade workspace versions to 0.13.5 and write a report to STDOUT
 terraform-manager -o example123 --terraform-version 0.13.5

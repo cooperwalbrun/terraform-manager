@@ -19,6 +19,7 @@ _bool_flags: Dict[str, bool] = {
     "blacklist": False,
     "silent": False,
     "summary": False,
+    "watch_runs": False,
     "lock_workspaces": False,
     "unlock_workspaces": False,
     "clear_working_directory": False,

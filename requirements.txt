@@ -4,13 +4,20 @@
 #
 #    pip-compile
 #
+asciimatics==1.12.0       # via terraform-manager (setup.py)
 certifi==2020.12.5        # via requests
-chardet==3.0.4            # via requests
+chardet==4.0.0            # via requests
+future==0.18.2            # via asciimatics
 idna==2.10                # via requests
+pillow==8.0.1             # via asciimatics
+pyfiglet==0.8.post1       # via asciimatics
+pywin32==300              # via asciimatics
 ratelimit==2.2.1          # via terraform-manager (setup.py)
 regex==2020.11.13         # via terraform-manager (setup.py)
-requests==2.25.0          # via terraform-manager (setup.py)
+requests==2.25.1          # via terraform-manager (setup.py)
 semver==2.13.0            # via terraform-manager (setup.py)
 tabulate==0.8.7           # via terraform-manager (setup.py)
+timeago==1.0.15           # via terraform-manager (setup.py)
 urllib3==1.26.2           # via requests
-wheel==0.36.1             # via terraform-manager (setup.py)
+wcwidth==0.2.5            # via asciimatics
+wheel==0.36.2             # via terraform-manager (setup.py)

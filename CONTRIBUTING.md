@@ -5,11 +5,12 @@
     1. [Adding New Dependencies](#adding-new-dependencies)
     2. [Updating Dependencies](#updating-dependencies)
 4. [Unit Testing](#unit-testing)
-5. [Formatting Code](#formatting-code)
+5. [Running terraform-manager Locally](#running-terraform-manager-locally)
+6. [Formatting Code](#formatting-code)
     1. [YAPF](#yapf)
     2. [Type Annotations](#type-annotations)
     3. [Imports](#imports)
-6. [Changelog](#changelog)
+7. [Changelog](#changelog)
 
 ## Development Workspace Setup
 
@@ -31,9 +32,9 @@ pip install -e .[testing]     # Unit testing purposes only
 
 ## Dependency Management
  
-Note that you may need to occasionally update your environment's `pip-tools` in order for the
-`pip-compile` command to run smoothly. In general, try to stay on the latest version of `pip-tools`
-unless this file documents otherwise. Updating `pip-tools` is as simple as running the following:
+You may need to occasionally update your environment's `pip-tools` in order for the `pip-compile`
+commands to run smoothly. In general, try to stay on the latest version of `pip-tools` unless this
+file documents otherwise. Updating `pip-tools` is as simple as running the following:
 
 ```bash
 pip install --upgrade pip-tools
@@ -91,6 +92,22 @@ project's root directory:
 python setup.py test # Run unit tests using your current virtual environment's Python interpreter
 tox                  # Run unit tests using tox (requires that you have the necessary Python interpreters on your machine)
 ```
+
+## Running terraform-manager Locally
+
+To run the program as a CLI tool in your local development environment, you can use a command such
+as the following (`--summary` operation for demonstrative purposes):
+
+```bash
+python -m terraform_manager -o example123 --summary
+```
+
+Beware attempting to run the "watcher" functionality of `terraform-manager` using built-in IDE 
+tooling. You may experience the TUI not appearing at all; if this happens, you should instead run
+the command for the watcher directly in a terminal.
+
+>Having to issue the command in a terminal is a known limitation when using IntelliJ IDEA's built-in
+>"Run/Debug Configurations" mechanism, but may apply to other IDEs as well.
 
 ## Formatting Code
 
