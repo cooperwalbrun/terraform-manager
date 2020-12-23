@@ -1,5 +1,7 @@
 import os
 import textwrap
+import time
+from datetime import datetime
 from typing import Callable, Union, Optional, Dict, Any, List
 from urllib.parse import urlparse
 
@@ -74,3 +76,7 @@ def safe_deep_get(dictionary: Dict[str, Any], path: List[str]) -> Optional[Any]:
             return None
     else:
         return None
+
+
+def get_now_datetime() -> datetime:
+    return datetime.utcfromtimestamp(time.time())

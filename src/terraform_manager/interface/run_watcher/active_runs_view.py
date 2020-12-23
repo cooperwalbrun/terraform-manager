@@ -5,13 +5,14 @@ from typing import Callable, List, Tuple
 import timeago
 from asciimatics.exceptions import StopApplication
 from asciimatics.screen import Screen
-from asciimatics.widgets import Frame, Widget, Layout, MultiColumnListBox, Label, VerticalDivider
+from asciimatics.widgets import Frame, Widget, Layout, MultiColumnListBox, Label
 from terraform_manager.entities.run import Run
+from terraform_manager.utilities.utilities import get_now_datetime
 
 MultiColumnListViewOption = Tuple[List[str], int]
 
 _headers: List[str] = ["Workspace", "Run Status", "Status Since"]
-_minimum_seconds_between_fetches: float = 15.0
+_minimum_seconds_between_fetches: float = 12.0
 
 # It is very important for the following variables to live outside of the class below; when the
 # window is being resized, it will force very rapid re-instantiations of the ActiveRunsView class,
@@ -23,18 +24,28 @@ _last_api_call: float = 0.0
 
 
 def _get_empty_state_data() -> List[MultiColumnListViewOption]:
-    time_ago = timeago.format(
-        datetime.utcfromtimestamp(_last_api_call), datetime.utcfromtimestamp(time.time())
-    )
-    return [([f"None as of {time_ago}", "", "", ""], 0)]
+    time_ago = timeago.format(datetime.utcfromtimestamp(_last_api_call), get_now_datetime())
+    return [([f"None as of {time_ago}", "", ""], 0)]
 
 
 def _get_table_data() -> List[MultiColumnListViewOption]:
     options = []
     for index, run in enumerate(_runs):
-        row = [run.workspace.name, run.status, run.status_timestamp, run.created_by]
+        row = [run.workspace.name, run.status, str(run.status_unix_time)]
         options.append((row, index))
-    return _get_empty_state_data() if len(options) == 0 else options
+    if len(options) == 0:
+        return _get_empty_state_data()
+    else:
+        # The sort operations below require the sorted() function to use a stable sorting algorithm
+        # internally (otherwise the end result would not be as desired)
+        sorted_options = sorted(options, key=lambda x: (x[0][0], x[0][1]))
+        sorted_options = sorted(sorted_options, key=lambda x: x[0][2], reverse=True)
+        return [(_beautify(row), index) for row, index in sorted_options]
+
+
+def _beautify(table_row: List[str]) -> List[str]:
+    time_ago = timeago.format(datetime.utcfromtimestamp(float(table_row[2])), get_now_datetime())
+    return [table_row[0], table_row[1], time_ago]
 
 
 class ActiveRunsView(Frame):
@@ -63,21 +74,18 @@ class ActiveRunsView(Frame):
         self._run_generator = run_generator
         self._targeting_specific_workspaces = targeting_specific_workspaces
 
-        # Below are the widths (as percentages) of the columns of the data table
-        workspace_header_width = 45
-        status_header_width = 15
-        timestamp_header_width = 20
-        created_by_width = 20
+        # Below are the widths (as percentages) of the columns of the data table - these should
+        # total 100% for proper display behavior
+        workspace_header_width = 58
+        status_header_width = 20
+        timestamp_header_width = 22
 
         # Set up the headers widgets
         # divider = VerticalDivider()
         headers = [
-            Label(text, height=1, align="^")
-            for text in ["Workspace", "Status", "Timestamp", "Created By"]
+            Label(text, height=1, align="^") for text in ["Workspace", "Status", "Timestamp"]
         ]
-        headers_widths = [
-            workspace_header_width, status_header_width, timestamp_header_width, created_by_width
-        ]
+        headers_widths = [workspace_header_width, status_header_width, timestamp_header_width]
 
         # Set up the parent layout of the headers widgets
         headers_layout = Layout(headers_widths, fill_frame=False)
@@ -91,8 +99,7 @@ class ActiveRunsView(Frame):
             columns=[
                 f"<{workspace_header_width}%",
                 f"^{status_header_width}%",
-                f">{timestamp_header_width}%",
-                f"<{created_by_width}%"
+                f">{timestamp_header_width}%"
             ],
             options=_get_empty_state_data(),
             name="active_runs"
@@ -108,7 +115,7 @@ class ActiveRunsView(Frame):
 
     def _fetch_current_runs(self) -> None:
         global _runs, _last_api_call
-        if round(time.time() - _last_api_call) >= _minimum_seconds_between_fetches:
+        if time.time() - _last_api_call >= _minimum_seconds_between_fetches:
             # This is an expensive operation because self.run_generator() is expected to call the
             # Terraform API
             _runs = self._run_generator()

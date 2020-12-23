@@ -10,8 +10,7 @@ from terraform_manager.entities.workspace import Workspace
 from terraform_manager.interface.run_watcher.active_runs_view import ActiveRunsView
 from terraform_manager.terraform import get_api_headers
 from terraform_manager.utilities.throttle import throttle
-from terraform_manager.utilities.utilities import get_protocol, safe_http_request, safe_deep_get, \
-    coalesce
+from terraform_manager.utilities.utilities import get_protocol, safe_http_request
 
 
 def _get_active_runs_for_workspace(
@@ -39,16 +38,16 @@ def _get_active_runs_for_workspace(
 
     if response.status_code == 200 and len(response.json().get("data")) > 0:
         for run_json in response.json()["data"]:
-            if "status" in run_json and "status-timestamps" in run_json:
-                created_by = safe_deep_get(run_json, ["relationships", "created-by"])
-                run = Run(
-                    workspace=workspace,
-                    status=run_json["status"],
-                    all_status_timestamps=run_json["status-timestamps"],
-                    created_by=coalesce(created_by, "unknown")
-                )
-                if run.is_active:
-                    active_runs.append(run)
+            if "attributes" in run_json:
+                attributes = run_json["attributes"]
+                if "status" in attributes and "status-timestamps" in attributes:
+                    run = Run(
+                        workspace=workspace,
+                        status=attributes["status"],
+                        all_status_timestamps=attributes["status-timestamps"]
+                    )
+                    if run.is_active:
+                        active_runs.append(run)
     return active_runs
 
 
@@ -111,6 +110,6 @@ def launch_run_watcher(
             except ResizeScreenError:
                 # We simply need to re-run Screen.wrapper() when this happens, which will happen
                 # automatically during the next iteration of this infinite loop
-                pass
+                continue
             except KeyboardInterrupt:  # This is thrown when the program is interrupted by the user
                 sys.exit(0)
