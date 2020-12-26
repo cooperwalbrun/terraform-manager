@@ -10,7 +10,7 @@ from tabulate import tabulate
 from terraform_manager.entities.error_response import ErrorResponse
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import pagination, get_api_headers, SuccessHandler, ErrorHandler, \
-    MESSAGE_COLUMN_CHARACTER_COUNT
+    MESSAGE_COLUMN_CHARACTER_COUNT, TARGETING_SPECIFIC_WORKSPACES_TEXT
 from terraform_manager.utilities.throttle import throttle
 from terraform_manager.utilities.utilities import safe_http_request, get_protocol, wrap_text, \
     coalesce, safe_deep_get
@@ -313,6 +313,6 @@ def write_summary(
 
         if targeting_specific_workspaces:
             print()
-            print(f"{os.linesep}Note: information is only being displayed for certain workspaces.")
+            print(os.linesep + TARGETING_SPECIFIC_WORKSPACES_TEXT)
 
         print()

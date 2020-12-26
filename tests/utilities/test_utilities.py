@@ -1,5 +1,6 @@
 from requests import RequestException, Response
-from terraform_manager.utilities.utilities import parse_domain, safe_http_request, safe_deep_get
+from terraform_manager.utilities.utilities import parse_domain, safe_http_request, safe_deep_get, \
+    convert_timestamp_to_unix_time, convert_hashicorp_timestamp_to_unix_time
 
 
 def test_parse_url() -> None:
@@ -48,3 +49,30 @@ def test_safe_deep_get() -> None:
         assert safe_deep_get({"test": {"test": test}}, []) is None
         assert safe_deep_get({"test": test}, ["test", "test"]) is None
         assert safe_deep_get({"test": test}, ["test", "test", "test"]) is None
+
+
+def test_convert_timestamp_to_unix_time() -> None:
+    # yapf: disable
+    tests = [
+        ("2017-11-28T22:52:46", "%Y-%m-%dT%H:%M:%S", 1511909566),
+        ("2017-11-28T22:52:46UTC", "%Y-%m-%dT%H:%M:%S%Z", 1511909566),
+        ("2017-11-28T22:52:46GMT", "%Y-%m-%dT%H:%M:%S%Z", 1511909566),
+        ("something bad", "%Y", None)
+    ]
+    # yapf: enable
+    for timestamp, timestamp_format, expected in tests:
+        assert convert_timestamp_to_unix_time(timestamp, timestamp_format) == expected
+
+
+def test_convert_hashicorp_timestamp_to_unix_time() -> None:
+    # yapf: disable
+    tests = [
+        ("2020-11-05T04:31:25+00:00", 1604550685),
+        ("2020-11-05T04:31:25+04:00", 1604536285),
+        ("2020-11-05T04:31:25-04:00", None),
+        ("2017-11-28T22:52:46", None),
+        ("something bad", None)
+    ]
+    # yapf: enable
+    for timestamp, expected in tests:
+        assert convert_hashicorp_timestamp_to_unix_time(timestamp) == expected

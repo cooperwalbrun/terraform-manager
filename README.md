@@ -11,6 +11,8 @@
 4. [Usage (CLI)](#usage-cli)
     1. [Selecting Workspaces (CLI)](#selecting-workspaces-cli)
     2. [Operations (CLI)](#operations-cli)
+        1. [Variables](#variables)
+        2. [Run Watcher](#run-watcher)
 5. [Usage (Python)](#usage-python)
     1. [Selecting Workspaces (Python)](#selecting-workspaces-python)
     2. [Operations (Python)](#operations-python)
@@ -156,9 +158,6 @@ terraform-manager -o example123 -w aws* -b <operation>
 # Print a workspace summary to STDOUT
 terraform-manager -o example123 --summary
 
-# Launch the workspace run watcher, which creates a TLI in STDOUT
-terraform-manager -o example123 --watch-runs
-
 # Upgrade workspace versions to 0.13.5 and write a report to STDOUT
 terraform-manager -o example123 --terraform-version 0.13.5
 
@@ -199,6 +198,8 @@ terraform-manager -o example123 --disable-speculative
 terraform-manager -o example123 --delete-vars some-key other-key
 ```
 
+#### Variables
+
 The variable configuration operation is a bit different from the ones above; the input to it is a
 JSON file containing the variables you wish to define. The contents of this file should consist only
 of a JSON array containing one or more JSON objects. To generate an example `template.json` file,
@@ -220,6 +221,23 @@ terraform-manager -o example123 --configure-vars /some/path/my-vars-file.json
 This will create all the variables defined in `my-vars-file.json` in every selected workspace, and
 if any given variable already exists in a workspace (comparison is done by variable key only), it
 will be updated in-place to align with your specified configuration.
+
+#### Run Watcher
+
+There is another special operation in the CLI: `--watch-runs`. It may be used as such:
+
+```bash
+terraform-manager -o example123 --watch-runs
+```
+
+This operation is unique because it launches a TUI (text user interface) that runs directly in your
+command prompt, and the TUI will not exit until the process is terminated, e.g. with `Ctrl+C`. The
+TUI will repeatedly fetch active run data from the Terraform API on a set interval, so the data will
+be near-real-time (i.e. delayed by a few seconds).
+
+The interface is supported on both Windows and Linux operating systems, but there is a caveat to its
+usage. If you are using a nonstandard command prompt for your operating system (e.g. Git Bash on
+Windows), the TUI may not function properly.
 
 ## Usage (Python)
 

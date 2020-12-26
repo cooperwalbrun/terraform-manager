@@ -392,7 +392,6 @@ class Terraform:
         """
         launch_run_watcher(
             self.terraform_domain,
-            self.organization,
             self.workspaces,
             targeting_specific_workspaces=self.workspace_names is not None,
             no_tls=self.no_tls,

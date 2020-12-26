@@ -10,6 +10,9 @@ HTTP_CONTENT_TYPE: str = "application/vnd.api+json"
 
 MESSAGE_COLUMN_CHARACTER_COUNT: int = 70
 
+TARGETING_SPECIFIC_WORKSPACES_TEXT: str = \
+    "Note: information is only being displayed for certain workspaces."
+
 A = TypeVar("A")
 SuccessHandler = Callable[[A], None]
 ErrorHandler = Callable[[A, Union[Response, ErrorResponse]], None]

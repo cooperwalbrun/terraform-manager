@@ -259,6 +259,22 @@ def test_summary(mocker: MockerFixture) -> None:
     fail_mock.assert_not_called()
 
 
+def test_run_watcher(mocker: MockerFixture) -> None:
+    _mock_sys_argv_arguments(mocker)
+    fail_mock: MagicMock = _mock_cli_fail(mocker)
+    watcher_mock: MagicMock = mocker.patch(
+        "terraform_manager.entities.terraform.Terraform.launch_run_watcher", return_value=None
+    )
+    _mock_fetch_workspaces(mocker, [_test_workspace1])
+    _mock_parsed_arguments(mocker, _arguments({"watch_runs": True}))
+    _mock_get_group_arguments(mocker)
+
+    main()
+
+    watcher_mock.assert_called_once()
+    fail_mock.assert_not_called()
+
+
 def test_set_versions(mocker: MockerFixture) -> None:
     for success in [True, False]:
         _mock_sys_argv_arguments(mocker)

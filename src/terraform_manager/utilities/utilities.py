@@ -1,7 +1,8 @@
+import calendar
 import os
 import textwrap
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Callable, Union, Optional, Dict, Any, List
 from urllib.parse import urlparse
 
@@ -78,29 +79,26 @@ def safe_deep_get(dictionary: Dict[str, Any], path: List[str]) -> Optional[Any]:
         return None
 
 
-def get_now_datetime() -> datetime:
-    return datetime.utcfromtimestamp(time.time())
-
-
 def convert_timestamp_to_unix_time(timestamp: str, timestamp_format: str) -> Optional[int]:
     # Python 3 reference for the possible flags for datetime.strptime():
     # https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
     try:
-        return round(time.mktime(datetime.strptime(timestamp, timestamp_format).timetuple()))
+        parsed_datetime = datetime.strptime(timestamp, timestamp_format)
+        if parsed_datetime.tzinfo is None:
+            # We assume the time is in UTC if no zone information was available/parsed
+            parsed_datetime = parsed_datetime.replace(tzinfo=timezone.utc)
+        return round(parsed_datetime.timestamp())
     except:
         return None
 
 
 def convert_hashicorp_timestamp_to_unix_time(timestamp: str) -> Optional[int]:
-    try:
-        if "+" in timestamp:
-            # We need to transform the +HH:MM format that HashiCorp returns into +HHMM in
-            # order for the string to work with the %z flag used with datetime.strptime()
-            parts = timestamp.split("+")
-            reformatted_zone = parts[1].replace(":", "")
-            fixed_form = f"{parts[0]}+{reformatted_zone}"
-        else:
-            fixed_form = timestamp
+    if "+" in timestamp:
+        # The following steps transform the +HH:MM format that HashiCorp returns into +HHMM in order
+        # for the string to work with the %z flag used with datetime.strptime()
+        parts = timestamp.split("+")
+        reformatted_zone = parts[1].replace(":", "")
+        fixed_form = parts[0] + "+" + reformatted_zone
         return convert_timestamp_to_unix_time(fixed_form, "%Y-%m-%dT%H:%M:%S%z")
-    except:
+    else:
         return None

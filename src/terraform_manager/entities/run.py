@@ -1,8 +1,8 @@
 from typing import Dict, List
 
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.utilities.utilities import convert_hashicorp_timestamp_to_unix_time, \
-    convert_timestamp_to_unix_time
+from terraform_manager.utilities.utilities import convert_timestamp_to_unix_time, \
+    convert_hashicorp_timestamp_to_unix_time
 
 _dead_statuses: List[str] = [
     "planned_and_finished", "applied", "discarded", "errored", "canceled", "force_canceled"
@@ -13,12 +13,14 @@ class Run:
     def __init__(
         self,
         *,
+        run_id: str,
         workspace: Workspace,
         created_at: str,
         status: str,
         all_status_timestamps: Dict[str, str],
         has_changes: bool
     ):
+        self.run_id = run_id
         self.workspace = workspace
         self.created_at = created_at
         self.status = status
@@ -47,7 +49,7 @@ class Run:
 
     def __repr__(self) -> str:
         return (
-            f"Run(workspace={self.workspace.name}, "
+            f"Run(id={self.run_id}, workspace={self.workspace.name}, "
             f"created_at_unix_time={self.created_at_unix_time}, status={self.status}, "
             f"status_unix_time={self.status_unix_time}, is_active={self.is_active}, "
             f"has_changes={self.has_changes})"
@@ -55,3 +57,9 @@ class Run:
 
     def __str__(self) -> str:
         return repr(self)
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Run):
+            return self.run_id == other.run_id
+        else:
+            return False

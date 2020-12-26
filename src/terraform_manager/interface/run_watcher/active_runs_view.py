@@ -1,75 +1,27 @@
-import time
-from datetime import datetime
-from typing import Callable, List, Tuple
-
-import timeago
 from asciimatics.exceptions import StopApplication
 from asciimatics.screen import Screen
-from asciimatics.widgets import Frame, Widget, Layout, MultiColumnListBox, Label
-from terraform_manager.entities.run import Run
-from terraform_manager.utilities.utilities import get_now_datetime
+from asciimatics.widgets import Frame, Widget, Layout, MultiColumnListBox, Label, Divider
+from terraform_manager.interface.run_watcher.active_runs_view_shared_state import \
+    ActiveRunsViewSharedState
+from terraform_manager.terraform import TARGETING_SPECIFIC_WORKSPACES_TEXT
 
-MultiColumnListViewOption = Tuple[List[str], int]
-
-_headers: List[str] = ["Workspace", "Run Status", "Status Since"]
 _minimum_seconds_between_fetches: float = 12.0
-
-# It is very important for the following variables to live outside of the class below; when the
-# window is being resized, it will force very rapid re-instantiations of the ActiveRunsView class,
-# which in turn will trigger very rapid re-fetches from the Terraform API. The throttling that is in
-# place elsewhere in this program would guard against this, but it is better to be explicit here and
-# keep the API call variable separate from the class's lifecycle.
-_runs: List[Run] = []
-_last_api_call: float = 0.0
-
-
-def _get_empty_state_data() -> List[MultiColumnListViewOption]:
-    time_ago = timeago.format(datetime.utcfromtimestamp(_last_api_call), get_now_datetime())
-    return [([f"None currently", "", "waiting...", time_ago], 0)]
-
-
-def _get_table_data() -> List[MultiColumnListViewOption]:
-    options = []
-    for index, run in enumerate(_runs):
-        row = [
-            run.workspace.name,
-            str(run.created_at_unix_time),
-            run.status,
-            str(run.status_unix_time)
-        ]
-        options.append((row, index))
-    if len(options) == 0:
-        return _get_empty_state_data()
-    else:
-        # The sort operations below require the sorted() function to use a stable sorting algorithm
-        # internally (otherwise the end result would not be ordered as desired)
-        sorted_options = sorted(options, key=lambda x: (x[0][0], x[0][2]))
-        sorted_options = sorted(sorted_options, key=lambda x: (x[0][3], x[0][1]), reverse=True)
-        return [(_beautify(row), index) for row, index in sorted_options]
-
-
-def _beautify(table_row: List[str]) -> List[str]:
-    now = get_now_datetime()
-    created_time_ago = timeago.format(datetime.utcfromtimestamp(float(table_row[1])), now)
-    status_time_ago = timeago.format(datetime.utcfromtimestamp(float(table_row[3])), now)
-    return [table_row[0], created_time_ago, table_row[2], status_time_ago]
 
 
 class ActiveRunsView(Frame):
     def __init__(
         self,
+        shared_state: ActiveRunsViewSharedState,
         screen: Screen,
-        organization: str,
         *,
-        run_generator: Callable[[], List[Run]],
-        targeting_specific_workspaces: bool
+        minimum_seconds_between_fetches: float
     ):
         super(ActiveRunsView, self).__init__(
             screen,
             screen.height,
             screen.width,
-            on_load=self._refresh,
-            has_border=True,
+            on_load=self._rerender,
+            has_border=False,
             can_scroll=True,
             title="Current Active Runs"
         )
@@ -77,16 +29,15 @@ class ActiveRunsView(Frame):
         # See: https://asciimatics.readthedocs.io/en/stable/widgets.html#colour-schemes
         self.set_theme("monochrome")
 
-        self._organization = organization
-        self._run_generator = run_generator
-        self._targeting_specific_workspaces = targeting_specific_workspaces
+        self._shared_state = shared_state
+        self._minimum_seconds_between_fetches = minimum_seconds_between_fetches
 
         # Below are the widths (as percentages) of the columns of the data table - these should
         # total 100% for proper display behavior
-        workspace_header_width = 42
-        created_header_width = 18
-        status_header_width = 18
-        timestamp_header_width = 22
+        workspace_header_width = 37
+        created_header_width = 23
+        status_header_width = 17
+        timestamp_header_width = 23
 
         # Set up the headers widgets
         # divider = VerticalDivider()
@@ -116,7 +67,8 @@ class ActiveRunsView(Frame):
                 f"^{status_header_width}%",
                 f">{timestamp_header_width}%"
             ],
-            options=_get_empty_state_data(),
+            add_scroll_bar=False,
+            options=self._shared_state.get_empty_state_data(),
             name="active_runs"
         )
 
@@ -125,21 +77,24 @@ class ActiveRunsView(Frame):
         self.add_layout(table_layout)
         table_layout.add_widget(self._table_list_box, column=0)
 
+        if self._shared_state.targeting_specific_workspaces:
+            divider = Divider(draw_line=True)
+            partial_target_warning = Label(TARGETING_SPECIFIC_WORKSPACES_TEXT)
+            partial_target_layout = Layout([100])
+            self.add_layout(partial_target_layout)
+            partial_target_layout.add_widget(divider)
+            partial_target_layout.add_widget(partial_target_warning)
+
         # Finally, we are done creating the interface - the last thing we must do is call self.fix()
         self.fix()
 
-    def _fetch_current_runs(self) -> None:
-        global _runs, _last_api_call
-        if time.time() - _last_api_call >= _minimum_seconds_between_fetches:
-            # This is an expensive operation because self.run_generator() is expected to call the
-            # Terraform API
-            _runs = self._run_generator()
-            _last_api_call = time.time()
-
-    def _refresh(self) -> None:
-        self._fetch_current_runs()
-        self._table_list_box.options = _get_table_data()
+    def _rerender(self) -> None:
+        # This method is the core driver of this view - it is called on every re-render triggered by
+        # asciimatics (which is based on the frame rate and the length of the "scene" which contains
+        # this view - see terraform/runs.py for more information
+        self._shared_state.fetch_current_runs_if_needed(self._minimum_seconds_between_fetches)
+        self._table_list_box.options = self._shared_state.get_table_data()
 
     @staticmethod
-    def _quit() -> None:
+    def _quit() -> None:  # pragma: no cover
         raise StopApplication("User exited the program")

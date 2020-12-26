@@ -1,13 +1,11 @@
-import sys
 from typing import Optional, List
 
 import requests
-from asciimatics.exceptions import ResizeScreenError
-from asciimatics.scene import Scene
-from asciimatics.screen import Screen
 from terraform_manager.entities.run import Run
 from terraform_manager.entities.workspace import Workspace
-from terraform_manager.interface.run_watcher.active_runs_view import ActiveRunsView
+from terraform_manager.interface.run_watcher import screen_player
+from terraform_manager.interface.run_watcher.active_runs_view_shared_state import \
+    ActiveRunsViewSharedState
 from terraform_manager.terraform import get_api_headers
 from terraform_manager.utilities.throttle import throttle
 from terraform_manager.utilities.utilities import get_protocol, safe_http_request
@@ -20,6 +18,7 @@ def _get_active_runs_for_workspace(
     no_tls: bool = False,
     token: Optional[str] = None
 ) -> List[Run]:
+    required_attributes = ["created-at", "status", "status-timestamps", "has-changes"]
     active_runs = []
 
     headers = get_api_headers(terraform_domain, token=token, write_error_messages=False)
@@ -27,8 +26,8 @@ def _get_active_runs_for_workspace(
     endpoint = f"{base_url}/workspaces/{workspace.workspace_id}/runs"
     parameters = {
         # See: https://www.terraform.io/docs/cloud/api/index.html#pagination
-        # Note that this method only checks the most recent 100 runs for the workspace (this will
-        # always be sufficient in practice)
+        # Note that this method only checks the most recent 100 runs for the workspace (this will be
+        # sufficient in practice)
         "page[number]": 1,
         "page[size]": 100
     }
@@ -36,27 +35,28 @@ def _get_active_runs_for_workspace(
         lambda: throttle(lambda: requests.get(endpoint, headers=headers, params=parameters))
     )
 
-    if response.status_code == 200 and len(response.json().get("data")) > 0:
-        required_attributes = ["created-at", "status", "status-timestamps", "has-changes"]
-        for run_json in response.json()["data"]:
-            if "attributes" in run_json:
-                attributes = run_json["attributes"]
-                if all([x in attributes for x in required_attributes]):
-                    run = Run(
-                        workspace=workspace,
-                        created_at=attributes["created-at"],
-                        status=attributes["status"],
-                        all_status_timestamps=attributes["status-timestamps"],
-                        has_changes=attributes["has-changes"]
-                    )
-                    if run.is_active and run.has_changes:
-                        active_runs.append(run)
+    if response.status_code == 200:
+        json = response.json()
+        if "data" in json and len(json["data"]) > 0:
+            for run_json in json["data"]:
+                if "id" in run_json and "attributes" in run_json:
+                    attributes = run_json["attributes"]
+                    if all([x in attributes for x in required_attributes]):
+                        run = Run(
+                            run_id=run_json["id"],
+                            workspace=workspace,
+                            created_at=attributes["created-at"],
+                            status=attributes["status"],
+                            all_status_timestamps=attributes["status-timestamps"],
+                            has_changes=attributes["has-changes"]
+                        )
+                        if run.is_active and run.has_changes:
+                            active_runs.append(run)
     return active_runs
 
 
 def launch_run_watcher(
     terraform_domain: str,
-    organization: str,
     workspaces: List[Workspace],
     *,
     targeting_specific_workspaces: bool,
@@ -71,7 +71,6 @@ def launch_run_watcher(
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
-    :param organization: The organization containing the workspaces to lock/unlock.
     :param workspaces: The workspaces to lock or unlock.
     :param targeting_specific_workspaces: Whether one or more workspaces was specified in order to
                                           filter the list of workspaces when they were fetched.
@@ -92,27 +91,8 @@ def launch_run_watcher(
             )
         return report
 
-    def screen_player(screen: Screen) -> None:
-        screen.clear()
-        active_runs_frame = ActiveRunsView(
-            screen,
-            organization,
-            run_generator=get_all_runs,
-            targeting_specific_workspaces=targeting_specific_workspaces
-        )
-        # Setting the duration to 10 will force asciimatic to re-render the scene twice per second
-        # (there are about 20 frames per second), but the API calls will NOT happen that frequently;
-        # see ActiveRunsView for more information
-        scenes = [Scene([active_runs_frame], duration=10, clear=False, name="main")]
-        screen.play(scenes, stop_on_resize=True, repeat=True)
-
     if write_output:
-        while True:
-            try:
-                Screen.wrapper(screen_player)
-            except ResizeScreenError:
-                # We simply need to re-run Screen.wrapper() when this happens, which will happen
-                # automatically during the next iteration of this infinite loop
-                continue
-            except KeyboardInterrupt:  # This is thrown when the program is interrupted by the user
-                sys.exit(0)
+        state = ActiveRunsViewSharedState(
+            run_generator=get_all_runs, targeting_specific_workspaces=targeting_specific_workspaces
+        )
+        screen_player.run_watcher_loop(state)
