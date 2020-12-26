@@ -80,3 +80,27 @@ def safe_deep_get(dictionary: Dict[str, Any], path: List[str]) -> Optional[Any]:
 
 def get_now_datetime() -> datetime:
     return datetime.utcfromtimestamp(time.time())
+
+
+def convert_timestamp_to_unix_time(timestamp: str, timestamp_format: str) -> Optional[int]:
+    # Python 3 reference for the possible flags for datetime.strptime():
+    # https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
+    try:
+        return round(time.mktime(datetime.strptime(timestamp, timestamp_format).timetuple()))
+    except:
+        return None
+
+
+def convert_hashicorp_timestamp_to_unix_time(timestamp: str) -> Optional[int]:
+    try:
+        if "+" in timestamp:
+            # We need to transform the +HH:MM format that HashiCorp returns into +HHMM in
+            # order for the string to work with the %z flag used with datetime.strptime()
+            parts = timestamp.split("+")
+            reformatted_zone = parts[1].replace(":", "")
+            fixed_form = f"{parts[0]}+{reformatted_zone}"
+        else:
+            fixed_form = timestamp
+        return convert_timestamp_to_unix_time(fixed_form, "%Y-%m-%dT%H:%M:%S%z")
+    except:
+        return None

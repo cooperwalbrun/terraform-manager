@@ -29,14 +29,11 @@ def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
         "speculative-enabled"
     ]
 
-    def is_valid(json_object: Dict[str, Any]) -> bool:
-        if "id" not in json_object or "attributes" not in json_object:
+    def is_valid(data_json_object: Dict[str, Any]) -> bool:
+        if "id" not in data_json_object or "attributes" not in data_json_object:
             return False
         else:
-            for attribute in required_attributes:
-                if attribute not in json_object["attributes"]:
-                    return False
-            return True
+            return all(x in data_json_object["attributes"] for x in required_attributes)
 
     workspaces = []
     for json_object in json:
@@ -44,17 +41,18 @@ def _map_workspaces(json: List[Dict[str, Any]]) -> List[Workspace]:
             agent_pool_id = safe_deep_get(
                 json_object, ["relationships", "agent-pool", "data", "id"]
             )
+            attributes = json_object["attributes"]
             workspaces.append(
                 Workspace(
                     workspace_id=json_object["id"],
-                    name=json_object["attributes"]["name"],
-                    terraform_version=json_object["attributes"]["terraform-version"],
-                    auto_apply=json_object["attributes"]["auto-apply"],
-                    is_locked=json_object["attributes"]["locked"],
-                    working_directory=json_object["attributes"]["working-directory"],
+                    name=attributes["name"],
+                    terraform_version=attributes["terraform-version"],
+                    auto_apply=attributes["auto-apply"],
+                    is_locked=attributes["locked"],
+                    working_directory=attributes["working-directory"],
                     agent_pool_id=coalesce(agent_pool_id, ""),
-                    execution_mode=json_object["attributes"]["execution-mode"],
-                    speculative=json_object["attributes"]["speculative-enabled"]
+                    execution_mode=attributes["execution-mode"],
+                    speculative=attributes["speculative-enabled"]
                 )
             )
     return workspaces

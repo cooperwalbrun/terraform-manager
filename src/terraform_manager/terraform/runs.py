@@ -37,16 +37,19 @@ def _get_active_runs_for_workspace(
     )
 
     if response.status_code == 200 and len(response.json().get("data")) > 0:
+        required_attributes = ["created-at", "status", "status-timestamps", "has-changes"]
         for run_json in response.json()["data"]:
             if "attributes" in run_json:
                 attributes = run_json["attributes"]
-                if "status" in attributes and "status-timestamps" in attributes:
+                if all([x in attributes for x in required_attributes]):
                     run = Run(
                         workspace=workspace,
+                        created_at=attributes["created-at"],
                         status=attributes["status"],
-                        all_status_timestamps=attributes["status-timestamps"]
+                        all_status_timestamps=attributes["status-timestamps"],
+                        has_changes=attributes["has-changes"]
                     )
-                    if run.is_active:
+                    if run.is_active and run.has_changes:
                         active_runs.append(run)
     return active_runs
 

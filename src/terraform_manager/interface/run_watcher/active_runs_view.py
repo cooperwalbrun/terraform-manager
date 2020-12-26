@@ -25,27 +25,34 @@ _last_api_call: float = 0.0
 
 def _get_empty_state_data() -> List[MultiColumnListViewOption]:
     time_ago = timeago.format(datetime.utcfromtimestamp(_last_api_call), get_now_datetime())
-    return [([f"None as of {time_ago}", "", ""], 0)]
+    return [([f"None currently", "", "waiting...", time_ago], 0)]
 
 
 def _get_table_data() -> List[MultiColumnListViewOption]:
     options = []
     for index, run in enumerate(_runs):
-        row = [run.workspace.name, run.status, str(run.status_unix_time)]
+        row = [
+            run.workspace.name,
+            str(run.created_at_unix_time),
+            run.status,
+            str(run.status_unix_time)
+        ]
         options.append((row, index))
     if len(options) == 0:
         return _get_empty_state_data()
     else:
         # The sort operations below require the sorted() function to use a stable sorting algorithm
-        # internally (otherwise the end result would not be as desired)
-        sorted_options = sorted(options, key=lambda x: (x[0][0], x[0][1]))
-        sorted_options = sorted(sorted_options, key=lambda x: x[0][2], reverse=True)
+        # internally (otherwise the end result would not be ordered as desired)
+        sorted_options = sorted(options, key=lambda x: (x[0][0], x[0][2]))
+        sorted_options = sorted(sorted_options, key=lambda x: (x[0][3], x[0][1]), reverse=True)
         return [(_beautify(row), index) for row, index in sorted_options]
 
 
 def _beautify(table_row: List[str]) -> List[str]:
-    time_ago = timeago.format(datetime.utcfromtimestamp(float(table_row[2])), get_now_datetime())
-    return [table_row[0], table_row[1], time_ago]
+    now = get_now_datetime()
+    created_time_ago = timeago.format(datetime.utcfromtimestamp(float(table_row[1])), now)
+    status_time_ago = timeago.format(datetime.utcfromtimestamp(float(table_row[3])), now)
+    return [table_row[0], created_time_ago, table_row[2], status_time_ago]
 
 
 class ActiveRunsView(Frame):
@@ -76,16 +83,23 @@ class ActiveRunsView(Frame):
 
         # Below are the widths (as percentages) of the columns of the data table - these should
         # total 100% for proper display behavior
-        workspace_header_width = 58
-        status_header_width = 20
+        workspace_header_width = 42
+        created_header_width = 18
+        status_header_width = 18
         timestamp_header_width = 22
 
         # Set up the headers widgets
         # divider = VerticalDivider()
         headers = [
-            Label(text, height=1, align="^") for text in ["Workspace", "Status", "Timestamp"]
+            Label(text, height=1, align="^")
+            for text in ["Workspace", "Created", "Status", "Status As Of"]
         ]
-        headers_widths = [workspace_header_width, status_header_width, timestamp_header_width]
+        headers_widths = [
+            workspace_header_width,
+            created_header_width,
+            status_header_width,
+            timestamp_header_width
+        ]
 
         # Set up the parent layout of the headers widgets
         headers_layout = Layout(headers_widths, fill_frame=False)
@@ -98,6 +112,7 @@ class ActiveRunsView(Frame):
             Widget.FILL_FRAME,
             columns=[
                 f"<{workspace_header_width}%",
+                f"^{created_header_width}%",
                 f"^{status_header_width}%",
                 f">{timestamp_header_width}%"
             ],
