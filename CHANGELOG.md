@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-Nothing currently!
+### Changed
+
+* The operating system detection strategy (Windows vs. others) now uses `sys.platform` instead of `os.name` (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Fixed
+
+* The `update-requirements.sh` script now operates properly on Linux (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ## v0.6.0 - 2020-12-30
 
