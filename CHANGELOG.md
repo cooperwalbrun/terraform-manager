@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing currently!
 
+## v0.6.0 - 2020-12-30
+
+### Added
+
+* Implemented the `--watch-runs` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
+### Changed
+
+* Updated documentation and `requirements.txt` files to address operating system-specific requirements (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* The `Tags` GitHub Actions workflow now only installs `wheel` (instead of a `requirements.txt`) prior to creating distribution artifacts (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* All `install_requires` dependencies in `setup.cfg` now specify a version lower bound based on `terraform-manager`'s inception date (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+
 ## v0.5.2 - 2020-12-13
 
 ### Added

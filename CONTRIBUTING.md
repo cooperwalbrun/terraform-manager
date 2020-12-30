@@ -5,11 +5,12 @@
     1. [Adding New Dependencies](#adding-new-dependencies)
     2. [Updating Dependencies](#updating-dependencies)
 4. [Unit Testing](#unit-testing)
-5. [Formatting Code](#formatting-code)
+5. [Running terraform-manager Locally](#running-terraform-manager-locally)
+6. [Formatting Code](#formatting-code)
     1. [YAPF](#yapf)
     2. [Type Annotations](#type-annotations)
     3. [Imports](#imports)
-6. [Changelog](#changelog)
+7. [Changelog](#changelog)
 
 ## Development Workspace Setup
 
@@ -29,11 +30,17 @@ pip install -e .[development] # Development and unit testing purposes
 pip install -e .[testing]     # Unit testing purposes only
 ```
 
+In order to use the `update-requirements.sh` script mentioned elsewhere in this document, you need
+to be able to run Bash scripts (and Linux commands such as `sed`). On Windows machines, this can
+easily be achieved using the Git Bash command line, which can be installed as part of
+[Git for Windows](https://gitforwindows.org/).
+
 ## Dependency Management
  
-Note that you may need to occasionally update your environment's `pip-tools` in order for the
-`pip-compile` command to run smoothly. In general, try to stay on the latest version of `pip-tools`
-unless this file documents otherwise. Updating `pip-tools` is as simple as running the following:
+You may need to occasionally update your environment's `pip-tools` in order for the `pip-compile`
+command in `update-requirements.sh` to run smoothly. In general, try to stay on the latest version
+of `pip-tools` unless this file documents otherwise. Updating `pip-tools` is as simple as running
+the following:
 
 ```bash
 pip install --upgrade pip-tools
@@ -41,8 +48,8 @@ pip install --upgrade pip-tools
 
 ### Adding New Dependencies
 
-Before issuing these commands, ensure that you are in the virtual environment and that you executed
-the `pip install` command intended for development purposes (see
+Before issuing these commands, **ensure that you are in the virtual environment** and that you
+executed the `pip install` command intended for development purposes (see
 [Development Workspace Setup](#development-workspace-setup)).
 
 1. Add the package to your environment.
@@ -50,7 +57,10 @@ the `pip install` command intended for development purposes (see
     pip install <package> # Adds the package to your virtual environment
     ```
 
-2. Add a reference to the package in the appropriate place(s). You must do only **one** of the tasks
+2. Test the dependency out (i.e. write your code) to ensure it satisfies your needs and that it
+   works well with existing dependencies.
+
+3. Add a reference to the package in the appropriate place(s). You must do only **one** of the tasks
    below.
     * If it is a **unit testing-only** dependency, add it under `testing =` in `setup.cfg` and
       `deps =` in `tox.ini`.
@@ -59,10 +69,12 @@ the `pip install` command intended for development purposes (see
     * If it is specific to a **GitHub Actions** workflow, add it under `github_actions =` in
       `setup.cfg`.
     * If it is a **production/runtime** dependency, add it under `install_requires =` in
-      `setup.cfg`.
+      `setup.cfg`. Unless you know lower versions will work too, specify the version you installed
+      as a lower bound (e.g. `somemodule>=X.Y.Z`). Either way, be sure to specify a lower bound (and
+      an upper bound, if applicable).
     
-3. Update `requirements.txt` accordingly. All you need to do for this is execute the `pip-compile`
-   command.
+4. Update the `requirements/*.txt` files accordingly. All you need to do for this is run the
+   `update-requirements.sh` Bash script.
 
 ### Updating Dependencies
 
@@ -70,19 +82,28 @@ the `pip install` command intended for development purposes (see
 >setup.py. After issuing `putup --update`, ensure that the `setuptools` version restrictions in
 >`setup.py` and `pyproject.toml` are identical.
 
-Ensure that you are in the virtual environment before issuing these commands. Also, note that these
-commands will only update the `requirements.txt`. You will still have to execute a `pip install`
-command to update what is actually installed in your virtual environment.
+**Ensure that you are in the virtual environment before issuing these commands.** Also, note that
+the `update-requirements.sh` script will only update the `requirements/*.txt` files. You will still
+have to execute a `pip install` command (also shown below) to update what is actually installed in
+your virtual environment.
 
-```properties
-pip-compile --upgrade                   # Update all packages
-pip-compile --upgrade-package <package> # Update a specific package
-pip install -r requirements.txt         # Run this after running either of the above
+```bash
+bash update-requirements.sh             # Updates the requirements TXT files using pip-compile
+pip install -r requirements/linux.txt   # If your operating system is Linux-based
+pip install -r requirements/windows.txt # If your operating system is Windows-based
 ```
+
+If the new version of the dependency is needed in order for the program to function, be sure to
+update the `install_requires` segment of `setup.cfg`.
+
+>You should avoid using the `pip-sync` command to update your dependencies, as this will destroy
+>your workspace's development-friendly install of `terraform-manager`, making you unable to use the
+>program locally. Use only the `pip install` command as shown above when installing/updating
+>dependencies.
 
 ## Unit Testing
 
-To run the unit tests, ensure you are in the virtual environment with development or testing
+To run the unit tests, **ensure you are in the virtual environment** with development or testing
 dependencies installed (see above) if running tests via `setup.py`, otherwise ensure you are **not**
 in a virtual environment if running tests via `tox`. Then, run the corresponding command in this
 project's root directory:
@@ -91,6 +112,21 @@ project's root directory:
 python setup.py test # Run unit tests using your current virtual environment's Python interpreter
 tox                  # Run unit tests using tox (requires that you have the necessary Python interpreters on your machine)
 ```
+
+## Running terraform-manager Locally
+
+To run the program as a CLI tool in your local development environment, you can use a command such
+as the following (`--summary` operation for demonstrative purposes):
+
+```bash
+python -m terraform_manager -o example123 --summary
+```
+
+Beware attempting to run the "watcher" functionality of `terraform-manager` (e.g. `--watch-runs`)
+using IDE tooling. You may experience the TUI not appearing at all; if this happens, you should
+instead run the command for the watcher directly in a terminal. This is a known limitation when
+using IntelliJ IDEA's built-in "Run/Debug Configurations" mechanism, but may apply to other IDEs as
+well.
 
 ## Formatting Code
 

@@ -5,6 +5,7 @@ from terraform_manager.entities.variable import Variable
 from terraform_manager.entities.workspace import Workspace
 from terraform_manager.terraform import CLOUD_DOMAIN
 from terraform_manager.terraform.locking import lock_or_unlock_workspaces
+from terraform_manager.terraform.runs import launch_run_watcher
 from terraform_manager.terraform.variables import configure_variables, delete_variables
 from terraform_manager.terraform.workspaces import fetch_all, batch_operation, write_summary
 from terraform_manager.utilities.utilities import is_empty, coalesce
@@ -382,7 +383,23 @@ class Terraform:
             write_output=self.write_output
         )
 
-    def __repr__(self):
+    def launch_run_watcher(self) -> None:
+        """
+        Launches a TLI for near-real-time report of all workspace run activity within the
+        organization.
+
+        :return: None.
+        """
+        launch_run_watcher(
+            self.terraform_domain,
+            self.workspaces,
+            targeting_specific_workspaces=self.workspace_names is not None,
+            no_tls=self.no_tls,
+            token=self.token,
+            write_output=self.write_output
+        )
+
+    def __repr__(self) -> str:
         return (
             "Terraform(domain={}, organization={}, workspaces=List[{}], blacklist={}, no_tls={}, "
             "token={}, write_output={})"
@@ -396,5 +413,5 @@ class Terraform:
             self.write_output
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)

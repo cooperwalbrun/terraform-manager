@@ -6,6 +6,7 @@ import responses
 from pytest_mock import MockerFixture
 from tabulate import tabulate
 from terraform_manager.entities.workspace import Workspace
+from terraform_manager.terraform import TARGETING_SPECIFIC_WORKSPACES_TEXT
 from terraform_manager.terraform.workspaces import fetch_all, batch_operation, _map_workspaces, \
     write_summary
 
@@ -368,9 +369,7 @@ def test_summary(mocker: MockerFixture) -> None:
                     )
                 ),
                 call(),
-                call(
-                    f"{os.linesep}Note: information is only being displayed for certain workspaces."
-                ),
+                call(os.linesep + TARGETING_SPECIFIC_WORKSPACES_TEXT),
                 call()
             ])
         else:

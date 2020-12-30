@@ -1,0 +1,2 @@
+-r base.txt
+pywin32==300              # via asciimatics

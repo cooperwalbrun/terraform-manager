@@ -79,6 +79,15 @@ _operation_group.add_argument(
     help="Writes a summary of the workspaces' information in tabulated format to STDOUT."
 )
 _operation_group.add_argument(
+    "--watch-runs",
+    action="store_true",
+    dest="watch_runs",
+    help=(
+        "Launches a TUI for near-real-time report of all workspace run activity within the "
+        "organization."
+    )
+)
+_operation_group.add_argument(
     "--terraform-version",
     type=str,
     metavar="VERSION",
@@ -265,6 +274,8 @@ def _organization_required_main(arguments: Dict[str, Any]) -> None:
         cli_handlers.fail()
     elif arguments["summary"]:
         terraform.write_summary()
+    elif arguments["watch_runs"]:
+        terraform.launch_run_watcher()
     elif arguments.get("terraform_version") is not None:
         cli_handlers.set_versions(terraform, arguments["terraform_version"])
     elif arguments["lock_workspaces"] or arguments["unlock_workspaces"]:

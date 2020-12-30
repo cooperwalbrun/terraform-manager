@@ -11,6 +11,8 @@
 4. [Usage (CLI)](#usage-cli)
     1. [Selecting Workspaces (CLI)](#selecting-workspaces-cli)
     2. [Operations (CLI)](#operations-cli)
+        1. [Variables](#variables)
+        2. [Run Watcher](#run-watcher)
 5. [Usage (Python)](#usage-python)
     1. [Selecting Workspaces (Python)](#selecting-workspaces-python)
     2. [Operations (Python)](#operations-python)
@@ -21,7 +23,7 @@
 `terraform-manager` is a multipurpose Python module and CLI tool for managing Terraform workspaces
 in batch fashion. It is specifically designed to help Terraform administrators manage arbitrarily
 many workspaces at once. It is also compatible with both Terraform Cloud and Terraform Enterprise,
-so regardless of what you or your company is using, this CLI can provide value.
+so regardless of what you or your company is using, this tool can provide value.
 
 ### Feature Summary
 
@@ -41,6 +43,7 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
     * Select workspaces using [Unix-like name pattern matching](https://docs.python.org/3/library/fnmatch.html)
 * Numerous operations available:
     * View a high-level summary of selected workspaces
+    * Watch all workspace run activity in near-real-time
     * Bulk update/create/delete variables of selected workspaces (with idempotency)
     * Bulk update settings of selected workspaces:
         * Terraform version
@@ -81,6 +84,9 @@ virtual environments):
 ```bash
 cat your-certificate.crt >> $(python -m certifi)
 ```
+
+This command would need to be re-run every time you update `terraform-manager` *and* it includes an
+underlying `certifi` version change.
 
 ## Configuration
 
@@ -192,6 +198,8 @@ terraform-manager -o example123 --disable-speculative
 terraform-manager -o example123 --delete-vars some-key other-key
 ```
 
+#### Variables
+
 The variable configuration operation is a bit different from the ones above; the input to it is a
 JSON file containing the variables you wish to define. The contents of this file should consist only
 of a JSON array containing one or more JSON objects. To generate an example `template.json` file,
@@ -213,6 +221,23 @@ terraform-manager -o example123 --configure-vars /some/path/my-vars-file.json
 This will create all the variables defined in `my-vars-file.json` in every selected workspace, and
 if any given variable already exists in a workspace (comparison is done by variable key only), it
 will be updated in-place to align with your specified configuration.
+
+#### Run Watcher
+
+There is another special operation in the CLI: `--watch-runs`. It may be used as such:
+
+```bash
+terraform-manager -o example123 --watch-runs
+```
+
+This operation is unique because it launches a TUI (text user interface) that runs directly in your
+command prompt, and the TUI will not exit until the process is terminated, e.g. with `Ctrl+C`. The
+TUI will repeatedly fetch active run data from the Terraform API on a set interval, so the data will
+be near-real-time (i.e. delayed by a few seconds).
+
+The interface is supported on both Windows and Linux operating systems, but there is a caveat to its
+usage. If you are using a nonstandard command prompt for your operating system (e.g. Git Bash on
+Windows), the TUI may not function properly.
 
 ## Usage (Python)
 

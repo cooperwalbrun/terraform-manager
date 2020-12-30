@@ -49,7 +49,7 @@ class Workspace:
     def is_terraform_version_equal_to(self, version: str) -> bool:
         return self.terraform_version == version
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"Workspace(id={self.workspace_id}, name={self.name}, "
             f"terraform_version={self.terraform_version}, auto_apply={self.auto_apply}, "
@@ -58,10 +58,10 @@ class Workspace:
             f"speculative={self.speculative})"
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if isinstance(other, Workspace):
             return other.workspace_id == self.workspace_id
         else:
