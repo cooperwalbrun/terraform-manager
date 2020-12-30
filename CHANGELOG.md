@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Nothing currently!
+
+## v0.6.0 - 2020-12-30
+
 ### Added
 
 * Implemented the `--watch-runs` functionality (by [@cooperwalbrun](https://github.com/cooperwalbrun))
