@@ -1,7 +1,6 @@
-import calendar
 import os
+import sys
 import textwrap
-import time
 from datetime import datetime, timezone
 from typing import Callable, Union, Optional, Dict, Any, List
 from urllib.parse import urlparse
@@ -12,7 +11,8 @@ from terraform_manager.entities.error_response import ErrorResponse
 
 
 def is_windows_operating_system() -> bool:  # pragma: no cover
-    return os.name == "nt"
+    # See: https://docs.python.org/3/library/sys.html#sys.platform
+    return sys.platform in ["win32", "cygwin", "msys"]
 
 
 def parse_domain(url: str) -> str:
