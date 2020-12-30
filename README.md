@@ -236,7 +236,7 @@ TUI will repeatedly fetch active run data from the Terraform API on a set interv
 be near-real-time (i.e. delayed by a few seconds).
 
 The interface is supported on both Windows and Linux operating systems, but there is a caveat to its
-usage. If you are using a nonstandard command prompt for your operating system (e.g. Git Bash on
+usage: if you are using a nonstandard command prompt for your operating system (e.g. Git Bash on
 Windows), the TUI may not function properly.
 
 ## Usage (Python)
