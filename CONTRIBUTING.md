@@ -84,8 +84,8 @@ executed the `pip install` command intended for development purposes (see
 
 **Ensure that you are in the virtual environment before issuing these commands.** Also, note that
 the `update-requirements.sh` script will only update the `requirements/*.txt` files. You will still
-have to execute a `pip install` command (also shown below) to update what is actually installed in
-your virtual environment.
+have to execute a `pip install` command (shown below) to update what is actually installed in your
+virtual environment.
 
 ```bash
 bash update-requirements.sh             # Updates the requirements TXT files using pip-compile
@@ -125,8 +125,11 @@ python -m terraform_manager -o example123 --summary
 Beware attempting to run the "watcher" functionality of `terraform-manager` (e.g. `--watch-runs`)
 using IDE tooling. You may experience the TUI not appearing at all; if this happens, you should
 instead run the command for the watcher directly in a terminal. This is a known limitation when
-using IntelliJ IDEA's built-in "Run/Debug Configurations" mechanism, but may apply to other IDEs as
-well.
+using IntelliJ IDEA's built-in "Run/Debug Configurations" mechanism, but it may apply to other IDEs
+as well.
+
+Refer to the [README.md](README.md) to see other limitations of the watchers with respect to your
+command prompt and/or operating system.
 
 ## Formatting Code
 
