@@ -122,12 +122,11 @@ as the following (`--summary` operation for demonstrative purposes):
 python -m terraform_manager -o example123 --summary
 ```
 
-Beware attempting to run the "watcher" functionality of `terraform-manager` using built-in IDE 
-tooling. You may experience the TUI not appearing at all; if this happens, you should instead run
-the command for the watcher directly in a terminal.
-
->Having to issue the command in a terminal is a known limitation when using IntelliJ IDEA's built-in
->"Run/Debug Configurations" mechanism, but may apply to other IDEs as well.
+Beware attempting to run the "watcher" functionality of `terraform-manager` (e.g. `--watch-runs`)
+using IDE tooling. You may experience the TUI not appearing at all; if this happens, you should
+instead run the command for the watcher directly in a terminal. This is a known limitation when
+using IntelliJ IDEA's built-in "Run/Debug Configurations" mechanism, but may apply to other IDEs as
+well.
 
 ## Formatting Code
 
