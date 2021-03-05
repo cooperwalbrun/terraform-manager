@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Nothing currently!
+
+## v0.6.1 - 2021-03-05
+
 ### Changed
 
 * The operating system detection strategy (Windows vs. others) now uses `sys.platform` instead of `os.name` (by [@cooperwalbrun](https://github.com/cooperwalbrun))
+* Updated all dependency versions (by [@cooperwalbrun](https://github.com/cooperwalbrun))
 
 ### Fixed
 

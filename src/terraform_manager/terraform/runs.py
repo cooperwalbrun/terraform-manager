@@ -65,9 +65,9 @@ def launch_run_watcher(
     write_output: bool = False
 ) -> None:
     """
-    Launches a TUI for near-real-time report of all workspace run activity within the organization.
-    By design, this method will not terminate until the program is killed by the user (e.g. via
-    Ctrl+C).
+    Launches a TUI for near-real-time reporting of all workspace run activity within the
+    organization. By design, this method will not terminate until the program is killed by the user
+    (e.g. via Ctrl+C).
 
     :param terraform_domain: The domain corresponding to the targeted Terraform installation (either
                              Terraform Cloud or Enterprise).
