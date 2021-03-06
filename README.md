@@ -59,10 +59,10 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 ### Limitations
 
 * Due to the rate-limiting restrictions imposed by the Terraform API, this module does not
-  officially support execution in a multi-threaded fashion (the rate limit is enforced by blocking
-  on the current thread until requests can be sent safely)
+  support execution in a multi-threaded fashion (the rate limit is enforced by blocking on the
+  current thread until requests can be sent safely)
 * `terraform-helper` is only tested against Python 3.6, 3.7, 3.8, and 3.9, so these are the only
-  supported Python distributions
+  officially-supported Python distributions
 
 ## Installation
 
@@ -85,8 +85,8 @@ virtual environments):
 cat your-certificate.crt >> $(python -m certifi)
 ```
 
-This command would need to be re-run every time you update `terraform-manager` *and* it includes an
-underlying `certifi` version change.
+This command would need to be re-run every time you update or reinstall `terraform-manager` *and* it
+includes an underlying `certifi` version change.
 
 ## Configuration
 
@@ -176,7 +176,7 @@ terraform-manager -o example123 --working-dir dev
 # Set working directories to empty and write a report to STDOUT
 terraform-manager -o example123 --clear-working-dir
 
-# Set the execution mode to "local" and write a report to STDOUT
+# Set the execution mode to "local" and write a report to STDOUT ("remote" works too)
 terraform-manager -o example123 --execution-mode local
 
 # Set the execution mode to "agent" with an agent pool ID (required) and write a report to STDOUT
@@ -311,7 +311,7 @@ success = terraform.set_working_directories("dev")
 # Set working directories to empty
 success = terraform.set_working_directories(None)
 
-# Set the execution mode to "local"
+# Set the execution mode to "local" ("remote" works too)
 success = terraform.set_execution_modes("local")
 
 # Set the execution mode to "agent" with an agent pool ID (required)
