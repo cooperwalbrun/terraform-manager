@@ -61,8 +61,8 @@ Here is a (non-exhaustive) outline of `terraform-manager`'s features:
 * Due to the rate-limiting restrictions imposed by the Terraform API, this module does not
   support execution in a multi-threaded fashion (the rate limit is enforced by blocking on the
   current thread until requests can be sent safely)
-* `terraform-helper` is only tested against Python 3.6, 3.7, 3.8, and 3.9, so these are the only
-  officially-supported Python distributions
+* `terraform-manager` is only tested against Python 3.6, 3.7, 3.8, 3.9, and 3.10 so these are the
+  only officially-supported Python distributions
 
 ## Installation
 
